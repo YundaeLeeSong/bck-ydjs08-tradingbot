@@ -22,7 +22,5 @@ When implementing logic, explicitly mention standard software design patterns us
 
 ## 3. Coding & Documentation Style
 *   **Docstrings:** All modules, classes, and functions must have standard Python docstrings briefly explaining their purpose, arguments (`Args:`), and return values (`Returns:`).
-*   **Inline Comments:** Use clear, concise inline comments. For design patterns, use the `# Pattern: [Name]` format immediately preceding the relevant code block.
+*   **Inline Comments:** Use clear, concise inline comments. For design patterns, use the `# [PatternName] ([sequentialStepNumber]): [comment/explain]` format immediately preceding the relevant code block.
 *   **Data Integrity:** Always validate and sanitize data before operations (e.g., checking if an array is empty, dropping NaNs).
-*   **Formatting:** When displaying calculations like percentages, format them cleanly (e.g., `.2f%`). Use `rich` for terminal output formatting.
-*   **Paths:** Output directories should follow a clean, structured convention (e.g., `_data/shorting`, `_data/longing`).
