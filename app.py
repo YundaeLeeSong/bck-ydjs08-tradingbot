@@ -101,7 +101,7 @@ def main():
         output_dir="_data/longing",
         min_mcap=100_000_000_000,
         min_price=10.0,
-        max_change=-4.5
+        max_change=-3.5
     )
 
 if __name__ == "__main__":

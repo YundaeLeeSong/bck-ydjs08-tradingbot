@@ -18,15 +18,15 @@ def display_summary_table(name, session):
     table = Table(title=f"{name.upper()} SUMMARY")
     table.add_column("Ticker", style="cyan", no_wrap=True)
     table.add_column("Sector", style="magenta")
-    table.add_column("Price", justify="right")
-    table.add_column("% Change", justify="right")
     table.add_column("Volume", justify="right")
     table.add_column("Market Cap", justify="right")
-    table.add_column("R-Squared", justify="right")
+    # table.add_column("R-Squared", justify="right")
     table.add_column("Slope", justify="right")
     table.add_column("Zeros", justify="right", style="green")
-    table.add_column("MAD", justify="right", style="yellow")
-    table.add_column("SD", justify="right", style="yellow")
+    table.add_column("Price", justify="right")
+    table.add_column("% Change (daily)", justify="right")
+    table.add_column("% MAD", justify="right", style="yellow")
+    table.add_column("% SD", justify="right", style="yellow")
     
     for model in session.results:
         mcap_billions = model.market_cap / 1_000_000_000
@@ -42,13 +42,13 @@ def display_summary_table(name, session):
         table.add_row(
             model.ticker,
             model.sector or "N/A",
-            f"{model.price:.2f}",
-            f"[{change_style}]{model.change_pct:.2f}%[/{change_style}]",
             f"{vol_millions:.2f}M",
             f"{mcap_billions:.2f}B",
-            r_sq_str,
+            # r_sq_str,
             slope_str,
             zeros_str,
+            f"{model.price:.2f}",
+            f"[{change_style}]{model.change_pct:.2f}%[/{change_style}]",
             mad_str,
             sd_str
         )
