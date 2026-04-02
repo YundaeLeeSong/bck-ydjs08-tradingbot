@@ -97,7 +97,7 @@ def generate_all_plots(symbol, df, metrics, output_dir="_data/shorting"):
 
     _ensure_dir(output_dir)
 
-    # Pattern: Template Method / Strategy (1) - We define the skeleton of plotting operations here.
+    # [Template Method Pattern]: We define the skeleton of plotting operations here.
     plot_base_regression(
         symbol, df, metrics['y'], metrics['line'], metrics['r_squared'], 
         metrics['slope'], metrics['std_err'], output_dir

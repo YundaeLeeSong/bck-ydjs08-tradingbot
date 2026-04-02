@@ -41,9 +41,9 @@ FMP will act as a robust safety net and a source for advanced fundamental metric
 ### Phase 2: FMP Fallback System
 - [ ] Register for an FMP API key and store it securely in a `.env` file.
 - [ ] Create an `FMPService` within the `services/` layer.
-- [ ] Implement a **Fallback/Retry Pattern** in `services/fetcher.py`: Attempt `yfinance.download()`, and if it throws an exception or returns empty, automatically route the request to `FMPService`.
-- [ ] Refactor `services/screener.py` to query the FMP Screener endpoint instead of scraping Yahoo's predefined URLs, ensuring more stable and customizable daily candidate generation.
+- [ ] Implement a **Fallback/Retry Pattern** in `services/yahoo_finance_api.py`: Attempt `yfinance.download()`, and if it throws an exception or returns empty, automatically route the request to `FMPService`.
+- [ ] Refactor `services/yahoo_finance_api.py` to query the FMP Screener endpoint instead of scraping Yahoo's predefined URLs, ensuring more stable and customizable daily candidate generation.
 
 ### Phase 3: Advanced Strategy Implementation
 - [ ] Once a day, run a batch job using FMP to pull and cache advanced alternative data (e.g., Insider Trading, Sentiment) for the stocks that passed the initial screener.
-- [ ] Integrate these new fundamental/alternative metrics into the `TickerRuntimeData` DTO to allow the orchestrator to make more sophisticated Go/No-Go trading decisions.
+- [ ] Integrate these new fundamental/alternative metrics into the `StockMetrics` DTO to allow the orchestrator to make more sophisticated Go/No-Go trading decisions.
