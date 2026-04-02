@@ -60,7 +60,7 @@ def calculate_derivative_metrics(df):
     
     return daily_pct_change, mad, sd
 
-# Pattern: Facade
+# [Facade Pattern]: Orchestrates all data analysis calculations to decouple math logic from plotting.
 def analyze_stock_data(df):
     """
     Orchestrates all data analysis calculations to decouple math logic from plotting.

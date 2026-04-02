@@ -4,9 +4,10 @@ A Python-based financial tool designed to screen the market for specific trading
 
 ## Features
 
-*   **Dual Strategies:**
+*   **Trading Strategies:**
     *   **Shorting Pipeline:** Scans for high-flying day gainers (>$1B Market Cap, >10% gain, >=$10 price) that might be overextended.
     *   **Longing Pipeline:** Scans for heavily beaten-down mega caps (>$100B Market Cap, < -4.5% drop, >=$10 price) looking for bounce opportunities.
+    *   **Company Search:** Looks up all tickers related to a specific company name (e.g., "YieldMax") and executes the analysis pipeline.
 *   **Automated Screening:** Integrates with Yahoo Finance screeners to find candidates dynamically while filtering out stocks nearing their ex-dividend dates.
 *   **Advanced Visualizations:** For each candidate, the tool automatically calculates metrics and generates three distinct charts:
     1.  `{ticker}.png`: A 1-year daily close chart overlaid with a linear regression trendline and $R^2$ stats.
@@ -17,16 +18,18 @@ A Python-based financial tool designed to screen the market for specific trading
 
 ## Directory Structure
 
-*   `app.py`: The Controller / Orchestrator. Defines strategies, coordinates fetching, analysis, and presentation.
+*   `app.py`: The executable wrapper / entry point for the application.
 *   `core/`: Domain models and internal state.
-    *   `models.py`: Contains DTOs (`TickerRuntimeData`) and registries (`AnalysisSession`).
+    *   `__main__.py`: The Controller / Orchestrator. Defines strategies, coordinates fetching, analysis, and presentation.
+    *   `stock_metrics.py`: Contains DTO (`StockMetrics`).
+    *   `analysis_report.py`: Contains registry (`AnalysisReport`).
 *   `services/`: External API integrations and business logic.
-    *   `screener.py`: Handles API requests to Yahoo screeners.
-    *   `fetcher.py`: Facade over `yfinance` to retrieve historical market data and company metadata (Sector).
-    *   `analyzer.py`: Core mathematical and statistical logic (SciPy, Pandas).
+    *   `market_data_api.py`: Abstract interface for market data extraction.
+    *   `yahoo_finance_api.py`: Handles API requests and encapsulates yfinance extraction.
+    *   `analysis.py`: Core mathematical and statistical logic (SciPy, Pandas).
 *   `views/`: Presentation layer.
-    *   `plotter.py`: Generates and saves matplotlib visualizations.
-    *   `cli.py`: Renders the `rich` summary table to the terminal.
+    *   `visualization.py`: Generates and saves matplotlib visualizations.
+    *   `console.py`: Renders the `rich` summary table to the terminal.
 *   `_data/`: Output directory where generated graphs are stored (e.g., `_data/shorting`, `_data/longing`).
 
 ## How to Run

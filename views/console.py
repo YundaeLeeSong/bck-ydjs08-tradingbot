@@ -12,12 +12,12 @@ def display_summary_table(name, session):
     
     Args:
         name (str): Strategy name (e.g. 'Longing', 'Shorting').
-        session (AnalysisSession): The session containing the runtime data.
+        session (AnalysisReport): The session containing the runtime data.
     """
     console = Console()
     table = Table(title=f"{name.upper()} SUMMARY")
     table.add_column("Ticker", style="cyan", no_wrap=True)
-    table.add_column("Sector", style="magenta")
+    table.add_column("Sector / Industry", style="magenta")
     table.add_column("Volume", justify="right")
     table.add_column("Market Cap", justify="right")
     # table.add_column("R-Squared", justify="right")
@@ -37,18 +37,18 @@ def display_summary_table(name, session):
         r_sq_str = f"{model.r_squared:.4f}" if model.r_squared is not None else "N/A"
         slope_str = f"{model.slope:.4f}" if model.slope is not None else "N/A"
         
-        change_style = "red" if model.change_pct < 0 else "green"
+        change_style = "red" if model.change_pct_daily < 0 else "green"
         
         table.add_row(
             model.ticker,
-            model.sector or "N/A",
+            model.sector_industry or "N/A",
             f"{vol_millions:.2f}M",
             f"{mcap_billions:.2f}B",
             # r_sq_str,
             slope_str,
             zeros_str,
             f"{model.price:.2f}",
-            f"[{change_style}]{model.change_pct:.2f}%[/{change_style}]",
+            f"[{change_style}]{model.change_pct_daily:.2f}%[/{change_style}]",
             mad_str,
             sd_str
         )
