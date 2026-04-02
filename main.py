@@ -1,149 +1,84 @@
 """
-Stock Analysis & Regression Tool v3.0
+Stock Analysis & Regression Tool v5.0
 ------------------------------------
-1. Logic: Generates all historical regression graphs (1Y) first.
-2. Filters: Market Cap >= $1B, Gain >= 10%, No Ex-Div Date.
-3. Display: Shows a summary table including Volume at the very end.
+1. Logic: High cohesion logic is set in main.py, making constraints explicit.
+2. Screens for both Longing (Losers) and Shorting (Gainers) candidates.
+3. Delegates fetching and plotting to stock_analysis package dynamically.
 """
 
-import os
-import requests
-import yfinance as yf
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy import stats
-from datetime import datetime
+from stock_analysis import get_filtered_movers, fetch_historical_data, generate_all_plots
 
-# --- Configuration ---
-DIR_NAME = "./shorting_data"
-MIN_MCAP = 1_000_000_000
-MIN_GAIN = 10.0
-
-def get_raw_value(data_point, default=0):
-    """Extracts raw numeric values from Yahoo's complex JSON objects."""
-    if isinstance(data_point, dict):
-        return data_point.get('raw', default)
-    return data_point if data_point is not None else default
-
-def format_date(timestamp):
-    """Converts Unix timestamps to YYYY-MM-DD or 'N/A'."""
-    if not timestamp or timestamp == 0:
-        return "N/A"
-    try:
-        return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
-    except:
-        return "N/A"
-
-def get_filtered_movers():
-    """Queries Yahoo for candidates satisfying the specific trading conditions."""
-    url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?formatted=true&scrIds=day_gainers&count=100"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+def run_analysis_pipeline(name, screener_id, output_dir, **constraints):
+    """
+    Executes the analysis pipeline for a specific trading strategy (e.g., Longing, Shorting).
+    All dependencies and constraints are injected from here.
+    """
+    print(f"\n[{name.upper()} STRATEGY] Initiating Market Scan...")
     
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        results = response.json().get('finance', {}).get('result', [{}])[0].get('quotes', [])
-        
-        candidates = []
-        for stock in results:
-            mcap = get_raw_value(stock.get('marketCap'))
-            gain = get_raw_value(stock.get('regularMarketChangePercent'))
-            vol = get_raw_value(stock.get('regularMarketVolume'))
-            ex_div = format_date(get_raw_value(stock.get('exDividendDate'))).strip()
-            
-            # Filter logic: $1B+ Cap, 10%+ Gain, No Ex-Div Date
-            if mcap >= MIN_MCAP and gain >= MIN_GAIN and ex_div == "N/A":
-                candidates.append({
-                    'ticker': stock.get('symbol'),
-                    'price': get_raw_value(stock.get('regularMarketPrice')),
-                    'change': gain,
-                    'mcap': mcap,
-                    'volume': vol
-                })
-        # Sort by gain descending
-        return sorted(candidates, key=lambda x: x['change'], reverse=True)
-    except Exception as e:
-        print(f"Error fetching data: {e}")
-        return []
+    # Fetch data based on explicit constraints passed from main()
+    stocks = get_filtered_movers(screener_id=screener_id, **constraints)
+    
+    if not stocks:
+        print(f"No stocks matched the criteria for {name} today.")
+        return
 
-def generate_regression_plots(stocks):
-    """
-    Fetches 1Y data and saves linear regression plots to ./shorting_data.
-    Displays error metrics and regression lines.
-    """
-    if not os.path.exists(DIR_NAME):
-        os.makedirs(DIR_NAME)
-        print(f"Created/Verified directory: {DIR_NAME}")
-
+    print(f"Found {len(stocks)} candidates. Starting analysis...")
+    
     for s in stocks:
         symbol = s['ticker']
         print(f"Graphing {symbol} (1Y Data)...")
-        try:
-            # period="1y" as requested
-            df = yf.download(symbol, period="1y", interval="1d", progress=False)
-            if df.empty:
-                continue
-
-            # Linear regression prep
-            y = df['Close'].values.flatten()
-            x = np.arange(len(y))
-
-            # Statistics calculation
-            slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-            line = slope * x + intercept
-            r_squared = r_value ** 2
-
-            # Visual Generation
-            plt.figure(figsize=(10, 5))
-            plt.plot(df.index, y, label='Daily Close', color='#1f77b4', alpha=0.6)
-            plt.plot(df.index, line, label='1Y Trendline', color='red', linestyle='--')
+        
+        df = fetch_historical_data(symbol)
+        if df is not None and not df.empty:
+            generate_all_plots(symbol, df, output_dir=output_dir)
             
-            plt.title(f"{symbol} 1Y Regression | R-Squared: {r_squared:.4f}")
-            plt.ylabel("Price (USD)")
-            plt.grid(True, linestyle=':', alpha=0.6)
-            
-            # Error and Stats overlay
-            stats_box = (f"Slope: {slope:.4f}\n"
-                         f"Std Error: {std_err:.4f}\n"
-                         f"R^2: {r_squared:.4f}")
-            plt.gca().text(0.02, 0.95, stats_box, transform=plt.gca().transAxes,
-                           verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-            
-            plt.savefig(os.path.join(DIR_NAME, f"{symbol}.png"))
-            plt.close()
+    print(f"Analysis complete. All graphs saved to {output_dir}\n")
 
-        except Exception as e:
-            print(f"Failed to process {symbol}: {e}")
-
-def main():
-    print("Initiating Market Scan...")
-    stocks = get_filtered_movers()
-    
-    if not stocks:
-        print("No stocks matched the criteria today.")
-        return
-
-    # Phase 1: Process Graphs First
-    print(f"Found {len(stocks)} candidates. Starting analysis...")
-    generate_regression_plots(stocks)
-    print("Analysis complete. All graphs saved to ./shorting_data\n")
-
-    # Phase 2: Display Summary Table
-    header = f"{'Ticker':<10} | {'Price':<10} | {'% Gain':<10} | {'Volume':<12} | {'Market Cap':<12}"
+    # Display Summary Table
+    print(f"--- {name.upper()} SUMMARY ---")
+    header = f"{'Ticker':<10} | {'Price':<10} | {'% Change':<10} | {'Volume':<12} | {'Market Cap':<12}"
     print(header)
     print("-" * len(header))
     
     for s in stocks:
-        # Convert values for readability
         mcap_billions = s['mcap'] / 1_000_000_000
         vol_millions = s['volume'] / 1_000_000
-        
         print(f"{s['ticker']:<10} | "
               f"{s['price']:<10.2f} | "
               f"{s['change']:>8.2f}% | "
               f"{vol_millions:>10.2f}M | "
               f"{mcap_billions:>10.2f}B")
+
+def main():
+    """
+    Main entry point for the Stock Analysis Tool.
+    Defines strategies explicitly using dependency injection to reduce coupling.
+    """
+    # -----------------------------------------------------
+    # STRATEGY 1: Shorting Data
+    # Intent: Look for big gainers (>$1B MCap) to short.
+    # -----------------------------------------------------
+    run_analysis_pipeline(
+        name="Shorting",
+        screener_id="day_gainers",
+        output_dir="./shorting_data",
+        min_mcap=1_000_000_000,
+        min_price=10.0,
+        min_change=10.0
+    )
+
+    # -----------------------------------------------------
+    # STRATEGY 2: Longing Data
+    # Intent: Look for big losers (>$100B MCap) to long.
+    # -----------------------------------------------------
+    run_analysis_pipeline(
+        name="Longing",
+        screener_id="day_losers",
+        output_dir="./longing_data",
+        min_mcap=100_000_000_000,
+        min_price=10.0,
+        max_change=-7.0
+    )
 
 if __name__ == "__main__":
     main()
