@@ -1,0 +1,32 @@
+[
+    {
+        "id": "20260330000000000::fc94e49c-3a1e-4fc5-8550-9ed9a91b9281",
+        "activity_type": "JNLC",
+        "date": "2026-03-30",
+        "created_at": "2026-03-30T14:12:28.090886Z",
+        "net_amount": "2.35",
+        "description": "Credit for Margin Interest Over Charge ",
+        "status": "canceled",
+        "currency": "USD"
+    },
+    {
+        "id": "20260330000000000::f50b5856-d0cf-4d6b-a960-332b0cabff5f",
+        "activity_type": "JNLC",
+        "date": "2026-03-30",
+        "created_at": "2026-03-30T14:04:27.612127Z",
+        "net_amount": "-2.35",
+        "description": "Credit for Margin Interest Over Charge ",
+        "status": "canceled",
+        "currency": "USD"
+    },
+    {
+        "id": "20260330000000000::b49bb96e-bd1d-45ff-9a5a-496aa47643c0",
+        "activity_type": "JNLC",
+        "date": "2026-03-30",
+        "created_at": "2026-03-30T14:16:05.49022Z",
+        "net_amount": "2.35",
+        "description": "Credit for Margin Interest Over Charge ",
+        "status": "executed",
+        "currency": "USD"
+    }
+]
