@@ -424,13 +424,15 @@ goto :EOF
 
 @REM ---------------------------------------------------------------------------
 @REM Function: Install-App
-@REM Usage: call :Install-App "<winget_ID>" "<Application_Name>" "<Executable_Command>" "<Program_Files_Folder_Name>"
+@REM Usage: call :Install-App "<winget_ID>" "<Application_Name>" "<Executable_Command>" "<Program_Files_Folder_Name>" [SKIP_VERIFY]
 @REM
 @REM Parameters:
 @REM   %1: The winget ID (e.g., "Git.Git").
 @REM   %2: A descriptive name for the application (e.g., "Git").
 @REM   %3: The executable command to check (e.g., "git").
 @REM   %4: The folder name to check for in Program Files (e.g., "Git").
+@REM   %5: Optional. If "SKIP_VERIFY", version verification (-version/--version/-v) is skipped.
+@REM       Use for apps that do not support these flags (e.g. AutoHotkey).
 @REM
 @REM Purpose:
 @REM   This function checks if an application is installed via winget and,
@@ -443,6 +445,7 @@ set APP_ID=%~1
 set APP_NAME=%~2
 set APP_CMD=%~3
 set PROGRAM_FOLDER=%~4
+set SKIP_VERIFY=%~5
 
 echo.
 echo.
@@ -491,6 +494,10 @@ if !ERRORLEVEL! EQU 0 (
 )
 
 :end_install_app
+@REM Skip version verification for apps that don't support -version/--version/-v (e.g. AutoHotkey)
+if /I "!SKIP_VERIFY!"=="SKIP_VERIFY" (
+  goto :end_install_app_done
+)
 "!APP_CMD!" -version >nul 2>&1
 if !ERRORLEVEL! EQU 0 (
   echo.!GREEN!Verifying !APP_NAME! installation...!RESET!
@@ -510,6 +517,7 @@ if !ERRORLEVEL! EQU 0 (
   "!APP_CMD!" -v
 )
 
+:end_install_app_done
 endlocal
 goto :EOF
 
@@ -752,14 +760,20 @@ call :Duplicate-Make
 call :Install-App "MinGW.MinGW" "Make (MinGW)" "make" "MinGW"
 call :Install-App "Kitware.CMake" "CMake" "cmake" "CMake"
 call :Install-App "NSIS.NSIS" "NSIS (Installer Creator)" "makensis" "NSIS"
+echo.
+echo.%YELLOW%To use NSIS from any command prompt, add the following directory to your system PATH:%RESET%
+echo.%CYAN%C:\Program Files (x86)\NSIS\Bin%RESET%
+
 call :Install-App "MiKTeX.MiKTeX" "MiKTeX" "pdflatex" "MiKTeX"
 
 
 @REM ---------------------------------------------------------------------------
-@REM Platform Dependents - native scripting Tools
+@REM Platform Dependents - Windows native scripting tools
 @REM ---------------------------------------------------------------------------
-call :Install-App "AutoHotkey.AutoHotkey" "AutoHotkey" "AutoHotkey64" "AutoHotkey"
-
+call :Install-App "AutoHotkey.AutoHotkey" "AutoHotkey" "AutoHotkey" "AutoHotkey" "SKIP_VERIFY"
+echo.
+echo.%YELLOW%To use AutoHotkey from any command prompt, add the following directory to your system PATH:%RESET%
+echo.%CYAN%C:\Program Files\AutoHotkey\v2%RESET%
 
 
 
