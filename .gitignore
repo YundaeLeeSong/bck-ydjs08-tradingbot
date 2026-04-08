@@ -16,7 +16,7 @@ python-lang*/
 *.key
 *.key.pub
 
-log-*/
+log*/
 
 ################################################################
 # General Ignores (Large Media Files & Common File Types)
