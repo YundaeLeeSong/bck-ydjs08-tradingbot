@@ -7,6 +7,7 @@ of the top-level market data loading endpoints.
 """
 
 import sys
+import os
 # [Facade] (2): Consume the root facade to execute the high-level application flow.
 from alphavi import load_market_data
 from alphavi.ftp import FMPService
@@ -20,6 +21,15 @@ except ValueError as e:
     sys.exit(1)
 
 
+
+
+
+
+def _logfile(name: str, table):
+    os.makedirs("log", exist_ok=True)
+    log_file = os.path.join("log", f"{name.lower().replace(' ', '_')}_summary.json")
+    with open(log_file, "w", encoding="utf-8") as f:
+        f.write(repr(table))
 
 def test_ftp():
     """
@@ -111,7 +121,7 @@ def test_alpaca():
 
 
 def main():
-    test_ftp()
+    # test_ftp()
     test_alpaca()
 
 
