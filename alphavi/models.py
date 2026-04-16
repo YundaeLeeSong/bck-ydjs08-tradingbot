@@ -66,6 +66,7 @@ class StockDataDTO:
     entry_price: float = 0.0
     pct_profit_and_loss: float = 0.0
     isActive: bool = False
+    isAnalyzed: bool = False
 
     def __repr__(self) -> str:
         """

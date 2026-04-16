@@ -12,7 +12,7 @@ from typing import Optional, Any
 from alphavi_util.core import get_env_var
 from alphavi.models import StockDataDTO
 
-_DEBUG_LOG_ = "log_ftp"
+_DEBUG_LOG_ = "log_fmp"
 
 class FMPService:
     """
@@ -121,6 +121,7 @@ class FMPService:
         """
         dto = StockDataDTO(symbol=ticker)
         dto.isActive = True
+        dto.isAnalyzed = True
         print(f"Fetching aggregated data for {ticker}...")
 
         def get_first(data):

@@ -60,13 +60,19 @@ def test_ftp_data_override_alpaca():
         return
         
     result_table = StockDataTable()
+    table1 = StockDataTable()
+    table2 = StockDataTable()
     
     for ticker in tickers_to_track:
         dto1 = fmp.get_stock_data(ticker)
         dto2 = alpaca.get_stock_data(ticker)
         dto_result = dto1.override(dto2)
         result_table.add(dto_result)
+        table1.add(dto1)
+        table2.add(dto2)
         
+    _logfile("Override operand 1", table1)
+    _logfile("Override operand 2", table2)
     _logfile("Override Result", result_table)
 
 
