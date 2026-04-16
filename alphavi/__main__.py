@@ -81,14 +81,14 @@ def test_alpaca():
 
         full_table = service.get_positions()
         _logfile("full_positions", full_table)
+        # debug on console
         for dto in full_table.get_all():
             if (dto.isActive): print(f"{dto.symbol}\t{dto.qty}")
 
-        option_tickers = service.get_tickers(["YieldMax"], ["Short"]) + service.get_tickers(["Roundhill", "WeeklyPay"])
-        inv_option_tickers = service.get_tickers(["YieldMax", "Short"])
-        index_tickers = service.get_tickers(["MicroSectors"], ["Inverse"]) 
-        index_tickers_x2 = service.get_tickers(["Bull", "2X"]) + service.get_tickers(["Leveraged", "2X"], ["Inverse"])
-        index_tickers_x3 = service.get_tickers(["Bull", "3X"]) + service.get_tickers(["Leveraged", "3X"], ["Inverse"])
+
+
+        option_tickers = service.get_tickers(["YieldMax"], ["Short"]) \
+        + service.get_tickers(["Roundhill", "WeeklyPay"]) 
 
         option_table = StockDataTable()
         for t in option_tickers:
@@ -96,29 +96,48 @@ def test_alpaca():
             if dto: option_table.add(dto)
         _logfile("Option Tickers", option_table, active_only=False)
         
+
+
+        inv_option_tickers = service.get_tickers(["YieldMax", "Short"])
         inv_option_table = StockDataTable()
         for t in inv_option_tickers:
             dto = full_table.get(t)
             if dto: inv_option_table.add(dto)
-        _logfile("Inverse Option Tickers", inv_option_table, active_only=False)
+        _logfile("Option Tickers Inverse", inv_option_table, active_only=False)
 
+
+
+        index_tickers = service.get_tickers(["MicroSectors"], ["Inverse", "due"])
         index_table = StockDataTable()
         for t in index_tickers:
             dto = full_table.get(t)
             if dto: index_table.add(dto)
         _logfile("Index Tickers", index_table, active_only=False)
         
+
+
+        index_tickers_inv = service.get_tickers(["MicroSectors", "Inverse"], ["due"])
+        index_table = StockDataTable()
+        for t in index_tickers_inv:
+            dto = full_table.get(t)
+            if dto: index_table.add(dto)
+        _logfile("Index Tickers Inverse", index_table, active_only=False)
+        
+        index_tickers_x2 = service.get_tickers(["Bull", "2X"]) + service.get_tickers(["Leveraged", "2X"], ["Inverse"])
         index_table_x2 = StockDataTable()
         for t in index_tickers_x2:
             dto = full_table.get(t)
             if dto: index_table_x2.add(dto)
         _logfile("Index Tickers x2", index_table_x2, active_only=False)
 
+
+        index_tickers_x3 = service.get_tickers(["Bull", "3X"]) + service.get_tickers(["Leveraged", "3X"], ["Inverse"])
         index_table_x3 = StockDataTable()
         for t in index_tickers_x3:
             dto = full_table.get(t)
             if dto: index_table_x3.add(dto)
         _logfile("Index Tickers x3", index_table_x3, active_only=False)
+        
 
 
 
