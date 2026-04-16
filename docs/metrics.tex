@@ -1,0 +1,69 @@
+\documentclass[letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\title{Technical Analysis Report: Intuit Inc. (INTU)}
+\author{Technical Analysis Division}
+\date{April 8, 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+A formal technical evaluation of Intuit Inc. (INTU) is provided herein. The analysis is derived from 1-year regression data, moving averages, and momentum oscillators. A sustained bearish trend is observed, characterized by a substantial decline in market value and the breach of key support levels.
+
+\section{Technical Metric Definitions and Distinctions}
+The fundamental technical indicators are defined and contrasted as follows to ensure a rigorous interpretation of the data:
+
+\begin{description}
+  \item[Simple Moving Average 50 (SMA 50)] The arithmetic mean of closing prices over the most recent 50 trading days is calculated. This metric serves as a medium-term momentum indicator. It is more sensitive to recent price shifts than the SMA 200, allowing for the identification of intermediate trend shifts while filtering out daily volatility.
+  \item[Simple Moving Average 200 (SMA 200)] The arithmetic mean of closing prices over the most recent 200 trading days is calculated. This represents the primary long-term trend of the equity. It is regarded as a primary ``line in the sand'' for institutional investors. A price position below the SMA 200 is generally interpreted as a state of long-term structural weakness.
+  \item[Relative Strength Index (RSI)] A momentum oscillator is utilized to quantify the velocity and magnitude of price movements on a scale from 0 to 100. It is primarily employed to identify ``overbought'' ($> 70$) or ``oversold'' ($< 30$) conditions.
+  \item[Coefficient of Determination ($R^2$)] A statistical measure is provided to indicate the proportion of variance for the stock price that is explained by the linear regression model. A higher value denotes a more predictable and consistent trend.
+\end{description}
+
+\section{Analysis of Individual Measures}
+The technical data points for INTU are analyzed within their respective contexts:
+
+\subsection{Trendline Regression}
+A 1-year linear regression model is utilized, yielding a slope of $-1.1425$. It is observed that the equity has depreciated at an average rate of \$1.14 per day. The $R^2$ value of $0.5164$ confirms that over half of the price action is explained by this downward trajectory, which indicates a consistent bearish bias.
+
+\subsection{Moving Average Comparison}
+The relationship between the medium-term and long-term averages is assessed as follows:
+\begin{itemize}
+  \item The \textbf{SMA 200} is recorded at \$621.02.
+  \item The \textbf{SMA 50} is recorded at \$433.33.
+\end{itemize}
+A ``Death Cross'' was previously formed when the SMA 50 descended below the SMA 200. This event is historically interpreted as a transition from a bullish to a bearish cycle. The current price of \$389.51 is positioned significantly below both averages, confirming that the bearish trend has accelerated beyond both medium-term and long-term expectations.
+
+\subsection{Momentum Assessment}
+The RSI (14) is currently calculated at $26.33$. Because this value resides below the 30-level threshold, the asset is classified as being in an ``oversold'' state. This condition suggests that the velocity of the recent sell-off may be unsustainable in the immediate term, often preceding a temporary corrective rally.
+
+\section{Comprehensive Interpretation}
+The synthesis of these measures provides an overview of the market condition for INTU. The negative slope and the current price relative to the SMA 50 and SMA 200 indicate that the primary trend is aggressively bearish. The widening gap between the SMA 200 and the current price suggests a significant lack of long-term support.
+
+However, a technical divergence is noted. While the trend is negative, the RSI of $26.33$ indicates that selling pressure is mathematically overextended. It is concluded that while the long-term outlook remains bearish, the probability of a short-term ``relief bounce'' is increased as the stock reaches oversold extremes.
+
+\section{Summary Table of Technical Data}
+\begin{table}[h!]
+  \centering
+  \begin{tabular}{l l l}
+    \toprule
+    \textbf{Metric} & \textbf{Value} & \textbf{Technical Status} \\
+    \midrule
+    Current Price & \$389.51 & Bearish \\
+    SMA 50 & \$433.33 & Medium-term Bearish \\
+    SMA 200 & \$621.02 & Long-term Bearish \\
+    RSI (14) & 26.33 & Oversold \\
+    Regression Slope & -1.1425 & Negative Bias \\
+    $R^2$ Fit & 0.5164 & Moderate Correlation \\
+    \bottomrule
+  \end{tabular}
+  \caption{Technical Summary for INTU}
+\end{table}
+
+\end{document}
