@@ -195,6 +195,7 @@ class AlpacaService:
             if not symbol:
                 continue
             dto = StockDataDTO(symbol=symbol)
+            dto.isActive = True
             try:
                 dto.qty = float(pos.get("qty", 0.0))
             except (ValueError, TypeError):
@@ -338,6 +339,7 @@ class AlpacaService:
             StockDataDTO: A data transfer object populated with position metrics.
         """
         dto = StockDataDTO(symbol=ticker)
+        dto.isActive = True
         
         # Fetch all positions in real-time
         data = self.fetch_endpoint("positions")

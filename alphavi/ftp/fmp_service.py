@@ -120,6 +120,7 @@ class FMPService:
             StockDataDTO: A data transfer object populated with the gathered metrics.
         """
         dto = StockDataDTO(symbol=ticker)
+        dto.isActive = True
         print(f"Fetching aggregated data for {ticker}...")
 
         def get_first(data):

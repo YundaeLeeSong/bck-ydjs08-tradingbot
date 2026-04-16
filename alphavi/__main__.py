@@ -25,11 +25,23 @@ except ValueError as e:
 
 
 
-def _logfile(name: str, table):
+def _logfile(name: str, table, active_only: bool = True):
     os.makedirs("log", exist_ok=True)
-    log_file = os.path.join("log", f"{name.lower().replace(' ', '_')}_summary.json")
+    log_file = os.path.join("log", f"{name.lower().replace(' ', '_')}.json")
+    
+    if hasattr(table, '_data'):
+        import json
+        from dataclasses import asdict
+        if active_only:
+            filtered_data = {k: asdict(v) for k, v in table._data.items() if getattr(v, 'isActive', True)}
+        else:
+            filtered_data = {k: asdict(v) for k, v in table._data.items()}
+        content = json.dumps(filtered_data, indent=2)
+    else:
+        content = repr(table)
+        
     with open(log_file, "w", encoding="utf-8") as f:
-        f.write(repr(table))
+        f.write(content)
 
 def test_ftp():
     """
@@ -44,76 +56,72 @@ def test_ftp():
     # Load the market data table
     data_table = load_market_data(tickers_to_track)
     
-    print("\n--- Market Data Summary ---")
-    print(data_table)
+    _logfile("Market Data Summary", data_table)
 
 def test_alpaca():
     """
     Test routine to execute Alpaca endpoints and verify data fetching.
     """
-    print("\n--- Running Alpaca API Tests ---")
     from alphavi.alpaca import AlpacaService
     
     try:
         # [Singleton] (3): Initialize the AlpacaService early to validate the API keys.
         service = AlpacaService(debug=True)
         
-        print("\n--- Testing get_account_info() ---")
         account_dto = service.get_account_info()
-        print(account_dto)
+        _logfile("account_info", account_dto)
         
-        print("\n--- Testing get_orders() ---")
         orders_table = service.get_orders()
-        print(orders_table)
+        _logfile("orders", orders_table)
         
-        
-        print("\nGenerating Finance Report...")
         service.report()
 
-        print("\n--- Testing get_tickers() and get_positions() ---")
         service = AlpacaService()
         from alphavi.models import StockDataTable
 
-        print("\nFetching complete StockDataTable with get_positions()...")
         full_table = service.get_positions()
-        print(f"Total assets loaded into table: {len(full_table.get_all())}")
+        _logfile("full_positions", full_table)
+        for dto in full_table.get_all():
+            if (dto.isActive): print(f"{dto.symbol}\t{dto.qty}")
 
-        option_tickers = service.get_tickers(["YieldMax", "Option"]) + service.get_tickers(["Roundhill", "WeeklyPay"])
-        index_tickers = service.get_tickers(["MicroSectors"], ["Inverse"])
+        option_tickers = service.get_tickers(["YieldMax"], ["Short"]) + service.get_tickers(["Roundhill", "WeeklyPay"])
+        inv_option_tickers = service.get_tickers(["YieldMax", "Short"])
+        index_tickers = service.get_tickers(["MicroSectors"], ["Inverse"]) 
+        index_tickers_x2 = service.get_tickers(["Bull", "2X"]) + service.get_tickers(["Leveraged", "2X"], ["Inverse"])
+        index_tickers_x3 = service.get_tickers(["Bull", "3X"]) + service.get_tickers(["Leveraged", "3X"], ["Inverse"])
 
-        print(f"Option Tickers ({len(option_tickers)}): {option_tickers}")
-        print("\n--- StockDataTable Output (Option Tickers) ---")
-        for ticker in option_tickers:
-            dto = full_table.get(ticker)
-            if dto:
-                print(f"{ticker}: shortable={dto.shortable}, fractionable={dto.fractionable}, qty={dto.qty}, price={dto.price}, entry_price={dto.entry_price}, change_today={dto.latestChangePercent}, pnl={dto.pct_profit_and_loss}")
+        option_table = StockDataTable()
+        for t in option_tickers:
+            dto = full_table.get(t)
+            if dto: option_table.add(dto)
+        _logfile("Option Tickers", option_table, active_only=False)
+        
+        inv_option_table = StockDataTable()
+        for t in inv_option_tickers:
+            dto = full_table.get(t)
+            if dto: inv_option_table.add(dto)
+        _logfile("Inverse Option Tickers", inv_option_table, active_only=False)
 
-        print(f"\nIndex Tickers ({len(index_tickers)}): {index_tickers}")
-        print("\n--- StockDataTable Output (Index Tickers) ---")
-        for ticker in index_tickers:
-            dto = full_table.get(ticker)
-            if dto:
-                print(f"{ticker}: shortable={dto.shortable}, fractionable={dto.fractionable}, qty={dto.qty}, price={dto.price}, entry_price={dto.entry_price}, change_today={dto.latestChangePercent}, pnl={dto.pct_profit_and_loss}")
+        index_table = StockDataTable()
+        for t in index_tickers:
+            dto = full_table.get(t)
+            if dto: index_table.add(dto)
+        _logfile("Index Tickers", index_table, active_only=False)
+        
+        index_table_x2 = StockDataTable()
+        for t in index_tickers_x2:
+            dto = full_table.get(t)
+            if dto: index_table_x2.add(dto)
+        _logfile("Index Tickers x2", index_table_x2, active_only=False)
 
-        # Also test with some actual open positions to see position data populated
-        print("\n--- Testing get_stock_data() with actual open positions ---")
-        positions_data = service.fetch_endpoint("positions")
-        if positions_data and isinstance(positions_data, list) and len(positions_data) > 0:
-            pos_table = StockDataTable()
-            sample_tickers = [p.get("symbol") for p in positions_data[:3] if p.get("symbol")]
-            print(f"Sample position tickers: {sample_tickers}")
-            for ticker in sample_tickers:
-                dto = service.get_stock_data(ticker)
-                pos_table.add(dto)
-                
-            for ticker in sample_tickers:
-                dto = pos_table.get(ticker)
-                if dto:
-                    print(f"{ticker}: shortable={dto.shortable}, fractionable={dto.fractionable}, qty={dto.qty}, price={dto.price}, entry_price={dto.entry_price}, change_today={dto.latestChangePercent}, pnl={dto.pct_profit_and_loss}")
-        else:
-            print("No open positions found to test position data.")
+        index_table_x3 = StockDataTable()
+        for t in index_tickers_x3:
+            dto = full_table.get(t)
+            if dto: index_table_x3.add(dto)
+        _logfile("Index Tickers x3", index_table_x3, active_only=False)
 
-        print("--- Alpaca API Tests Completed ---")
+
+
     except ValueError as e:
         print(f"Error: {e}")
         print("Ensure APCA_API_BASE_URL, APCA_API_KEY, and APCA_API_SECRET_KEY are set.")
