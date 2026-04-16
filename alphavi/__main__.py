@@ -46,18 +46,28 @@ def _logfile(name: str, table, active_only: bool = True):
 
 
 def test_ftp_data_override_alpaca():
-    # TODO: implement the following
-    # 1. StockDataDTO dto object is supposed to support its own operation, 
-    # def override(other: StockDataDTO) -> StockDataDTO. (rough definition)
-    # 2. say, dto1 from FMPService and dto2 from AlpacaService
-    # 3. dto_result = dto1.override(dto2) will perform override 
-    # operation as documented in override.tex
-    # 3. any initial values, false, 0.0, 0, "" are actually undefined field, 
-    # meaning, they are not supposed to be kept, or not mapped yet. If this 
-    # can be clarified with None, you can try, but make sure you do it 
-    # only when it simplifies the operation implementaion.
-    tickers_to_track = ["AAPL", "TSLA"]
-    pass
+    from alphavi.ftp import FMPService
+    from alphavi.alpaca import AlpacaService
+    from alphavi.models import StockDataTable
+    
+    tickers_to_track = ["AAPL"]
+    
+    try:
+        fmp = FMPService()
+        alpaca = AlpacaService()
+    except ValueError as e:
+        print(f"Error initializing services: {e}")
+        return
+        
+    result_table = StockDataTable()
+    
+    for ticker in tickers_to_track:
+        dto1 = fmp.get_stock_data(ticker)
+        dto2 = alpaca.get_stock_data(ticker)
+        dto_result = dto1.override(dto2)
+        result_table.add(dto_result)
+        
+    _logfile("Override Result", result_table)
 
 
 def test_ftp():

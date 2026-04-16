@@ -76,6 +76,25 @@ class StockDataDTO:
         """
         return json.dumps(asdict(self), indent=2)
 
+    def override(self, other: 'StockDataDTO') -> 'StockDataDTO':
+        """
+        Returns a new StockDataDTO by overriding self's attributes with other's attributes.
+        An attribute in 'other' is considered defined if it is not its initial/default value.
+        """
+        from dataclasses import fields
+        result = StockDataDTO()
+        for f in fields(self):
+            name = f.name
+            self_val = getattr(self, name)
+            other_val = getattr(other, name)
+            
+            # If the attribute in 'other' is defined (not its default value), it wins
+            if other_val != f.default:
+                setattr(result, name, other_val)
+            else:
+                setattr(result, name, self_val)
+        return result
+
 class StockDataTable:
     """
     An abstraction for holding a collection of StockDataDTO objects.

@@ -370,6 +370,15 @@ class AlpacaService:
                     pass
                 break
                 
+        # Fetch asset info to get shortable and fractionable status
+        asset_data = self.fetch_endpoint(f"assets/{ticker}")
+        print(asset_data)
+        if asset_data and isinstance(asset_data, dict):
+            dto.shortable = asset_data.get("shortable", False)
+            dto.fractionable = asset_data.get("fractionable", False)
+            if not dto.name:
+                dto.name = asset_data.get("name", "")
+                
         return dto
 
     def report(self) -> None:
