@@ -20,6 +20,7 @@ class StockDataDTO:
     industry: str = ""
     sector: str = ""
     price: float = 0.0
+    rt_price: float = 0.0
     latestChangePercent: float = 0.0
     
     # 1. Profile

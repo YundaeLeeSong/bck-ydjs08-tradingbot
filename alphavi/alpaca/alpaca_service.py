@@ -201,7 +201,7 @@ class AlpacaService:
             except (ValueError, TypeError):
                 pass
             try:
-                dto.price = float(pos.get("current_price", 0.0))
+                dto.rt_price = float(pos.get("current_price", 0.0))
             except (ValueError, TypeError):
                 pass
             try:
@@ -353,7 +353,7 @@ class AlpacaService:
                 except (ValueError, TypeError):
                     pass
                 try:
-                    dto.price = float(position.get("current_price", 0.0))
+                    dto.rt_price = float(position.get("current_price", 0.0))
                 except (ValueError, TypeError):
                     pass
                 try:

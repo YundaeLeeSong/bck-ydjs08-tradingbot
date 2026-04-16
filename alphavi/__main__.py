@@ -43,6 +43,23 @@ def _logfile(name: str, table, active_only: bool = True):
     with open(log_file, "w", encoding="utf-8") as f:
         f.write(content)
 
+
+
+def test_ftp_data_override_alpaca():
+    # TODO: implement the following
+    # 1. StockDataDTO dto object is supposed to support its own operation, 
+    # def override(other: StockDataDTO) -> StockDataDTO. (rough definition)
+    # 2. say, dto1 from FMPService and dto2 from AlpacaService
+    # 3. dto_result = dto1.override(dto2) will perform override 
+    # operation as documented in override.tex
+    # 3. any initial values, false, 0.0, 0, "" are actually undefined field, 
+    # meaning, they are not supposed to be kept, or not mapped yet. If this 
+    # can be clarified with None, you can try, but make sure you do it 
+    # only when it simplifies the operation implementaion.
+    tickers_to_track = ["AAPL", "TSLA"]
+    pass
+
+
 def test_ftp():
     """
     Main application loop.
@@ -57,6 +74,9 @@ def test_ftp():
     data_table = load_market_data(tickers_to_track)
     
     _logfile("Market Data Summary", data_table)
+
+
+
 
 def test_alpaca():
     """
@@ -81,9 +101,9 @@ def test_alpaca():
 
         full_table = service.get_positions()
         _logfile("full_positions", full_table)
-        # debug on console
-        for dto in full_table.get_all():
-            if (dto.isActive): print(f"{dto.symbol}\t{dto.qty}")
+        # # debug on console
+        # for dto in full_table.get_all():
+        #     if (dto.isActive): print(f"{dto.symbol}\t{dto.qty}")
 
 
 
@@ -149,7 +169,8 @@ def test_alpaca():
 
 def main():
     # test_ftp()
-    test_alpaca()
+    # test_alpaca()
+    test_ftp_data_override_alpaca()
 
 
 
