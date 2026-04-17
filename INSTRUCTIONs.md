@@ -6,7 +6,7 @@ This document records the architectural decisions, design patterns, and coding s
 *   **Modular Architecture (Domain-Driven):** The application is strictly separated into logical packages:
     *   `alphavi/`: Core domain package containing high-level logic, data models, and sub-packages.
     *   `alphavi_util/`: General utility package (e.g., environment variable retrieval) that is independent of the business domain and can be published separately.
-    *   `alphavi/ftp/`: Sub-package specifically for handling external API integrations (Financial Modeling Prep).
+    *   `alphavi/fmp/`: Sub-package specifically for handling external API integrations (Financial Modeling Prep).
     *   `alphavi/alpaca/`: Sub-package specifically for handling broker API integrations (Alpaca).
 *   **Single Responsibility per File:** 
     *   `models.py`: Data structures (`StockDataDTO`, `StockDataTable`, `ActiveOrderDTO`, `ActiveOrderTable`, `AccountDTO`).
@@ -20,7 +20,7 @@ This document records the architectural decisions, design patterns, and coding s
 
 *   **API Efficiency & Condensed DTOs:** Fetch only the strictly necessary endpoints to minimize network overhead and API cost. Map these to condensed DTOs containing only the actionable fields needed for the domain.
 *   **Client-Side Computation:** Prefer computing metrics (e.g., RSI, moving averages) locally using raw historical data whenever the specific pre-computed metric endpoints are restricted or require additional API calls.
-*   **Debug & Audit Logging:** Implement optional `debug` flags in API Singleton services. When enabled, raw HTTP JSON responses should be written to designated, locally defined directories (e.g., `log_alpaca`, `log_ftp`) for auditing and inspection without polluting standard output.
+*   **Debug & Audit Logging:** Implement optional `debug` flags in API Singleton services. When enabled, raw HTTP JSON responses should be written to designated, locally defined directories (e.g., `log_alpaca`, `log_fmp`) for auditing and inspection without polluting standard output.
 
 ## 2. Design Patterns Utilized
 When implementing logic, explicitly mention standard software design patterns using **inline comments**, labeling sequential steps if applicable. Do **NOT** put design pattern explanations inside formal docstrings.

@@ -1,5 +1,5 @@
 """
-FTP (Financial Modeling Prep) package initialization.
+FMP (Financial Modeling Prep) package initialization.
 
 Exposes the core FMPService class for clean, top-level imports.
 """

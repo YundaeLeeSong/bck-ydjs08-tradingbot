@@ -73,7 +73,7 @@ General company info and real-time (15-min delayed) pricing.
 ---
 
 ## Failed Endpoints on Free Tier
-While `ftp_proxy2.py` proved many complex metrics are free, some endpoints still failed:
+While `fmp_proxy2.py` proved many complex metrics are free, some endpoints still failed:
 *   **`stable/analyst-estimates`**: Returned a 400 Bad Request (missing `period` parameter, but usually requires Premium).
 *   **`stable/rating`**: Returned a 404 Not Found (Restricted/Premium).
 *   **`stable/stock-list`**: Returned 402 Payment Required (Premium).

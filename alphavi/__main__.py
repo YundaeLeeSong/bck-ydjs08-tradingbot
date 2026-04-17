@@ -10,7 +10,7 @@ import sys
 import os
 # [Facade] (2): Consume the root facade to execute the high-level application flow.
 from alphavi import load_market_data
-from alphavi.ftp import FMPService
+from alphavi.fmp import FMPService
 try:
     # [Singleton] (3): Initialize the FMPService early to validate the API key. 
     # Subsequent calls elsewhere will silently reuse this allocated instance.
@@ -45,8 +45,8 @@ def _logfile(name: str, table, active_only: bool = True):
 
 
 
-def test_ftp_data_override_alpaca():
-    from alphavi.ftp import FMPService
+def test_fmp_data_override_alpaca():
+    from alphavi.fmp import FMPService
     from alphavi.alpaca import AlpacaService
     from alphavi.models import StockDataTable
     
@@ -76,7 +76,7 @@ def test_ftp_data_override_alpaca():
     _logfile("Override Result", result_table)
 
 
-def test_ftp():
+def test_fmp():
     """
     Main application loop.
     
@@ -231,8 +231,8 @@ def test_yfinance():
     except Exception as e:
         print(f"Error in test_yfinance: {e}")
 
-def test_ftp_data_override_yfinance_override_alpaca():
-    from alphavi.ftp import FMPService
+def test_fmp_data_override_yfinance_override_alpaca():
+    from alphavi.fmp import FMPService
     from alphavi.yfinance import YFinanceService
     from alphavi.alpaca import AlpacaService
     from alphavi.models import StockDataTable
@@ -271,11 +271,11 @@ def test_ftp_data_override_yfinance_override_alpaca():
 
 
 def main():
-    # test_ftp()
+    # test_fmp()
     # test_alpaca()
-    test_ftp_data_override_alpaca()
+    test_fmp_data_override_alpaca()
     test_yfinance()
-    test_ftp_data_override_yfinance_override_alpaca()
+    test_fmp_data_override_yfinance_override_alpaca()
 
 
 
