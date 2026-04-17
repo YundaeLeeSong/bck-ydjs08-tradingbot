@@ -183,10 +183,99 @@ def test_alpaca():
 
 
 
+def test_yfinance():
+    """
+    Test routine to execute YFinance endpoints and verify data fetching.
+    """
+    from alphavi.yfinance import YFinanceService
+    
+    try:
+        # [Singleton] (3): Initialize the YFinanceService early to test.
+        service = YFinanceService(debug=True)
+        
+        # STRATEGY 1: Shorting Data
+        winner_tickers = service.get_winner_tickers(
+            max_mcap=100_000_000_000,
+            min_change=15.0
+        )
+        
+        if winner_tickers:
+            winners_table = service.get_stocks_table(
+                tickers=winner_tickers, 
+                graph_path="market_report/shorting"
+            )
+            _logfile("Shorting", winners_table, active_only=False)
+
+        # STRATEGY 2: Longing Data
+        loser_tickers = service.get_loser_tickers(
+            min_mcap=100_000_000_000,
+            max_change=-4.5
+        )
+        
+        if loser_tickers:
+            losers_table = service.get_stocks_table(
+                tickers=loser_tickers, 
+                graph_path="market_report/longing"
+            )
+            _logfile("Longing", losers_table, active_only=False)
+
+        # STRATEGY 3: Test Assets
+        test_tickers = ['TSLA', 'IONQ', 'HIMS', 'AMD', 'PSA', 'MAR', 'IGPT', 'SOXX']
+        if test_tickers:
+            test_table = service.get_stocks_table(
+                tickers=test_tickers,
+                graph_path="market_report/test"
+            )
+            _logfile("Test", test_table, active_only=False)
+            
+    except Exception as e:
+        print(f"Error in test_yfinance: {e}")
+
+def test_ftp_data_override_yfinance_override_alpaca():
+    from alphavi.ftp import FMPService
+    from alphavi.yfinance import YFinanceService
+    from alphavi.alpaca import AlpacaService
+    from alphavi.models import StockDataTable
+    
+    tickers_to_track = ["AAPL"]
+    
+    try:
+        fmp = FMPService()
+        yfinance = YFinanceService()
+        alpaca = AlpacaService()
+    except ValueError as e:
+        print(f"Error initializing services: {e}")
+        return
+        
+    result_table = StockDataTable()
+    table_fmp = StockDataTable()
+    table_yfinance = StockDataTable()
+    table_alpaca = StockDataTable()
+    
+    for ticker in tickers_to_track:
+        dto_fmp = fmp.get_stock_data(ticker)
+        dto_yfinance = yfinance.get_stock_data(ticker)
+        dto_alpaca = alpaca.get_stock_data(ticker)
+        
+        dto_result = dto_fmp.override(dto_yfinance).override(dto_alpaca)
+        
+        result_table.add(dto_result)
+        table_fmp.add(dto_fmp)
+        table_yfinance.add(dto_yfinance)
+        table_alpaca.add(dto_alpaca)
+        
+    _logfile("Override operand 1 FMP", table_fmp)
+    _logfile("Override operand 2 YFinance", table_yfinance)
+    _logfile("Override operand 3 Alpaca", table_alpaca)
+    _logfile("Override Result FMP_YFinance_Alpaca", result_table)
+
+
 def main():
     # test_ftp()
     # test_alpaca()
     test_ftp_data_override_alpaca()
+    test_yfinance()
+    test_ftp_data_override_yfinance_override_alpaca()
 
 
 

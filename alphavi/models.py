@@ -52,6 +52,12 @@ class StockDataDTO:
     priceAvg200: float = 0.0
     rsi14: float = 0.0
     
+    r_squared: float = 0.0
+    slope: float = 0.0
+    zero_freq: int = 0
+    pct_mad: float = 0.0
+    pct_sd: float = 0.0
+    
     # 7. Analyst Estimates
     epsLow: float = 0.0
     epsAvg: float = 0.0
