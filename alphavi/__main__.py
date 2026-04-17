@@ -220,7 +220,19 @@ def test_yfinance():
             _logfile("Longing", losers_table, active_only=False)
 
         # STRATEGY 3: Test Assets
-        test_tickers = ['TSLA', 'IONQ', 'HIMS', 'AMD', 'PSA', 'MAR', 'IGPT', 'SOXX']
+        test_tickers = [
+            'TSLA', 'IONQ', 'HIMS', 'AMD', 'PSA', 'MAR', 'IGPT', 'SOXX',
+            'WEBL',
+            'GDXU', 'SLV','COPX','LIT', # minings
+            'SPXL', 'SSO', 'SPY', # essentials
+            'TQQQ', 'QLD', 'QQQ', 'QQQM', 'QQQU', # Tech
+            'UDOW', 'DDM', 'DIA', # dow johns
+            'TNA',  'URTY', 'IWM', # russell 2000
+            'JEPI', 'JEPQ', 'SCHD', # accumulative assets
+            'GBTC', 'BTC', 'ETHE', 'ETH', # crypto
+            'AIQ', 'UFO', 'QTUM', # future
+            'BUG', 'CHAT', 'IGV', 'IGPT', 'AOTS', # software
+        ]
         if test_tickers:
             test_table = service.get_stocks_table(
                 tickers=test_tickers,
@@ -273,9 +285,9 @@ def test_fmp_data_override_yfinance_override_alpaca():
 def main():
     # test_fmp()
     # test_alpaca()
-    test_fmp_data_override_alpaca()
+    # test_fmp_data_override_alpaca()
     test_yfinance()
-    test_fmp_data_override_yfinance_override_alpaca()
+    # test_fmp_data_override_yfinance_override_alpaca()
 
 
 
