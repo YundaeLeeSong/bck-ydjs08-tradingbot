@@ -220,9 +220,7 @@ def test_yfinance():
             _logfile("Longing", losers_table, active_only=False)
 
         # STRATEGY 3: Test Assets
-        test_tickers = [
-            'TSLA', 'IONQ', 'HIMS', 'AMD', 'PSA', 'MAR', 'IGPT', 'SOXX',
-            'WEBL',
+        index_tickers = [
             'GDXU', 'SLV','COPX','LIT', # minings
             'SPXL', 'SSO', 'SPY', # essentials
             'TQQQ', 'QLD', 'QQQ', 'QQQM', 'QQQU', # Tech
@@ -232,13 +230,14 @@ def test_yfinance():
             'GBTC', 'BTC', 'ETHE', 'ETH', # crypto
             'AIQ', 'UFO', 'QTUM', # future
             'BUG', 'CHAT', 'IGV', 'IGPT', 'AOTS', # software
+            'WEBL', 'SOXX', # Hardware
         ]
-        if test_tickers:
+        if index_tickers:
             test_table = service.get_stocks_table(
-                tickers=test_tickers,
-                graph_path="market_report/test"
+                tickers=index_tickers,
+                graph_path="market_report/index"
             )
-            _logfile("Test", test_table, active_only=False)
+            _logfile("index", test_table, active_only=False)
             
     except Exception as e:
         print(f"Error in test_yfinance: {e}")
