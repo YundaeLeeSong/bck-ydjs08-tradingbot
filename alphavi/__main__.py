@@ -17,14 +17,13 @@ from alphavi.alpaca import AlpacaService
 try:
     # [Singleton] (3): Initialize the services early to validate the API keys and start debug modes.
     # Subsequent calls elsewhere will silently reuse these allocated instances.
-    FMPService(debug=True)
-    YFinanceService(debug=True)
-    AlpacaService(debug=True)
+    fmp = FMPService(debug=True)
+    yfinance = YFinanceService(debug=True)
+    alpaca = AlpacaService(debug=True)
 except ValueError as e:
     print(f"Error: {e}")
     print("Ensure all required API keys are in your environment or .env file.")
     sys.exit(1)
-
 
 
 
@@ -55,7 +54,7 @@ def test_fmp_data_override_alpaca():
     from alphavi.alpaca import AlpacaService
     from alphavi.models import StockDataTable
     
-    tickers_to_track = ["AAPL"]
+    tickers_to_track = ["AAPL", "MSTR", "TSLA"]
     
     try:
         fmp = FMPService()
@@ -255,16 +254,9 @@ def test_fmp_data_override_yfinance_override_alpaca():
     from alphavi.alpaca import AlpacaService
     from alphavi.models import StockDataTable
     
-    tickers_to_track = ["AAPL"]
+    tickers_to_track = ["AAPL", "MSTR", "TSLA"]
     
-    try:
-        fmp = FMPService()
-        yfinance = YFinanceService()
-        alpaca = AlpacaService()
-    except ValueError as e:
-        print(f"Error initializing services: {e}")
-        return
-        
+    
     result_table = StockDataTable()
     table_fmp = StockDataTable()
     table_yfinance = StockDataTable()
