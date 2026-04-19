@@ -57,7 +57,7 @@ class YFinanceService:
         if not self.debug:
             return
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        filename = os.path.join(_DEBUG_LOG_, f"YFinanceService.{operation}_{timestamp}.txt")
+        filename = os.path.join(_DEBUG_LOG_, f"yfinance_{operation}_{timestamp}.txt")
         with open(filename, "w", encoding="utf-8") as f:
             f.write("=== REQUEST ===\n")
             f.write(json.dumps(request_data, indent=2) if isinstance(request_data, dict) else str(request_data))

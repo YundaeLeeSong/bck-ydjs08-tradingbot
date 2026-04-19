@@ -11,13 +11,18 @@ import os
 # [Facade] (2): Consume the root facade to execute the high-level application flow.
 from alphavi import load_market_data
 from alphavi.fmp import FMPService
+from alphavi.yfinance import YFinanceService
+from alphavi.alpaca import AlpacaService
+
 try:
-    # [Singleton] (3): Initialize the FMPService early to validate the API key. 
-    # Subsequent calls elsewhere will silently reuse this allocated instance.
+    # [Singleton] (3): Initialize the services early to validate the API keys and start debug modes.
+    # Subsequent calls elsewhere will silently reuse these allocated instances.
     FMPService(debug=True)
+    YFinanceService(debug=True)
+    AlpacaService(debug=True)
 except ValueError as e:
     print(f"Error: {e}")
-    print("Ensure FMP_API_KEY is in your environment or .env file.")
+    print("Ensure all required API keys are in your environment or .env file.")
     sys.exit(1)
 
 

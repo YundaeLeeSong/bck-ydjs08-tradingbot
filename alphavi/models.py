@@ -44,10 +44,10 @@ class StockDataDTO:
 
     pct_profit_and_loss: float = 0.0 # accumulated pnl (Alpaca)
     
-    # 3. Historical (fmp)
-    priceAvg50: float = 0.0     # Simple Moving Average (SMA) - 50 days (fmp)
-    priceAvg200: float = 0.0    # Simple Moving Average (SMA) - 200 days (fmp)
-    rsi14: float = 0.0
+    # 3. Historical
+    priceAvg50: float = 0.0     # Simple Moving Average (SMA) - 50 days (yfinance)
+    priceAvg200: float = 0.0    # Simple Moving Average (SMA) - 200 days (yfinance)
+    rsi14: float = 0.0          # Relative Strength Index 14 - momentum oscillator (yfinance)
     r_squared: float = 0.0
     slope: float = 0.0
     zero_freq: int = 0
