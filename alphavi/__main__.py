@@ -282,10 +282,10 @@ def test_fmp_data_override_yfinance_override_alpaca():
 
 def main():
     # test_fmp()
-    # test_alpaca()
+    test_alpaca()
     # test_fmp_data_override_alpaca()
     # test_yfinance()
-    test_fmp_data_override_yfinance_override_alpaca()
+    # test_fmp_data_override_yfinance_override_alpaca()
 
 
 
