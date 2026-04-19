@@ -106,7 +106,7 @@ def test_alpaca():
     
     try:
         # [Singleton] (3): Initialize the AlpacaService early to validate the API keys.
-        service = AlpacaService(debug=True)
+        service = AlpacaService()
         
         account_dto = service.get_account_info()
         _logfile("account_info", account_dto)
@@ -116,7 +116,6 @@ def test_alpaca():
         
         service.report()
 
-        service = AlpacaService()
         from alphavi.models import StockDataTable
 
         full_table = service.get_positions()
@@ -277,15 +276,15 @@ def test_fmp_data_override_yfinance_override_alpaca():
     _logfile("Override operand 1 FMP", table_fmp)
     _logfile("Override operand 2 YFinance", table_yfinance)
     _logfile("Override operand 3 Alpaca", table_alpaca)
-    _logfile("Override Result FMP_YFinance_Alpaca", result_table)
+    _logfile("Override Result FMP_YFinance_Alpaca", result_table, active_only=False)
 
 
 def main():
     # test_fmp()
-    test_alpaca()
+    # test_alpaca()
     # test_fmp_data_override_alpaca()
     # test_yfinance()
-    # test_fmp_data_override_yfinance_override_alpaca()
+    test_fmp_data_override_yfinance_override_alpaca()
 
 
 

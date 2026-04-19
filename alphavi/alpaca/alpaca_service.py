@@ -54,6 +54,7 @@ class AlpacaService:
     ):
         # [Singleton] (2): Initialize configuration once, ignore subsequent __init__ calls.
         if self._initialized:
+            print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value()} for rebalance')
             return
 
         self.base_url = base_url or get_env_var("APCA_API_BASE_URL")
@@ -72,6 +73,7 @@ class AlpacaService:
         }
         self._assets_cache: Optional[List[dict]] = None
         self._initialized = True
+        print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value()} for rebalance')
 
     def fetch_endpoint(self, endpoint: str, params: Optional[dict] = None) -> Any:
         """
@@ -338,6 +340,14 @@ class AlpacaService:
             pass
             
         return dto
+
+    def get_unit_value(self) -> float:
+        """
+        Calculates the unit value dynamically.
+        Formula: (equity - maintenance_margin) / 100.0
+        """
+        account = self.get_account_info()
+        return (account.equity - account.maintenance_margin) / 100.0
 
     def get_stock_data(self, ticker: str) -> StockDataDTO:
         """
