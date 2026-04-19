@@ -39,9 +39,7 @@ class StockDataDTO:
     pct_sd: float = 0.0 # pnl daily percent change, standard deviation (fmp)
 
     
-    # TODO: change naming convention so it is consistent
-    # pct_ prefix is needed, also, AlpacaService is not providing value in percents, it is rate (-0.00935, not -0.935 %)
-    latestChangePercent: float = 0.0 # daily pnl (Alpaca) 
+    pct_latest_change: float = 0.0 # daily pnl (Alpaca) 
 
 
     pct_profit_and_loss: float = 0.0 # accumulated pnl (Alpaca)

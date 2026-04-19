@@ -209,7 +209,7 @@ class AlpacaService:
             except (ValueError, TypeError):
                 pass
             try:
-                dto.latestChangePercent = float(pos.get("change_today", 0.0))
+                dto.pct_latest_change = float(pos.get("change_today", 0.0)) * 100
             except (ValueError, TypeError):
                 pass
             try:
@@ -373,7 +373,7 @@ class AlpacaService:
                 except (ValueError, TypeError):
                     pass
                 try:
-                    dto.latestChangePercent = float(position.get("change_today", 0.0))
+                    dto.pct_latest_change = float(position.get("change_today", 0.0)) * 100
                 except (ValueError, TypeError):
                     pass
                 try:

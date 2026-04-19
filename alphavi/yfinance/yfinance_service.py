@@ -229,7 +229,7 @@ class YFinanceService:
         dto = StockDataDTO(
             symbol=symbol,
             price=price,
-            latestChangePercent=change_pct,
+            pct_latest_change=change_pct,
             volume=volume,
             marketCap=mcap,
             sector=sector,

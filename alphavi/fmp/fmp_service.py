@@ -140,7 +140,7 @@ class FMPService:
         dto.volume = profile_data.get("volume", profile_data.get("volAvg", 0))
         dto.averageVolume = profile_data.get("volAvg", profile_data.get("averageVolume", 0))
         dto.price = profile_data.get("price", 0.0)
-        dto.latestChangePercent = profile_data.get("changePercentage", 0.0)
+        dto.pct_latest_change = profile_data.get("changePercentage", 0.0)
 
         # 2. Ratios
         ratios_data = get_first(self.fetch_endpoint("ratios", {"symbol": ticker}))
