@@ -377,7 +377,7 @@ class AlpacaService:
                 except (ValueError, TypeError):
                     pass
                 try:
-                    dto.pct_profit_and_loss = float(position.get("unrealized_plpc", 0.0))
+                    dto.pct_profit_and_loss = float(position.get("unrealized_plpc", 0.0)) * 100
                 except (ValueError, TypeError):
                     pass
                 break

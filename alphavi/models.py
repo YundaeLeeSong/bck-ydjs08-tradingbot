@@ -43,6 +43,7 @@ class StockDataDTO:
 
 
     pct_profit_and_loss: float = 0.0 # accumulated pnl (Alpaca)
+    # TODO: pct_profit_and_loss is not in percents, it is just rate, (e.g. 0.08413, not 8.413)
     
     # 3. Historical
     priceAvg50: float = 0.0     # Simple Moving Average (SMA) - 50 days (yfinance)
