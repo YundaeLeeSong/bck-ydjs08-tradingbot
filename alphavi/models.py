@@ -154,13 +154,18 @@ class StockDataTable:
         # [Registry] (3): Retrieve the registered DTO by its unique key.
         return self._data.get(symbol)
 
-    def get_all(self) -> List[StockDataDTO]:
+    def get_all(self, active_only: bool = False) -> List[StockDataDTO]:
         """
         Retrieves all StockDataDTO objects currently in the table.
         
+        Args:
+            active_only (bool): If True, returns only rows where isActive is True.
+            
         Returns:
-            List[StockDataDTO]: A list of all stored DTOs.
+            List[StockDataDTO]: A list of stored DTOs.
         """
+        if active_only:
+            return [dto for dto in self._data.values() if getattr(dto, 'isActive', False)]
         return list(self._data.values())
 
     def remove(self, symbol: str) -> None:
@@ -173,6 +178,18 @@ class StockDataTable:
         # Validate removal key and existence
         if symbol and isinstance(symbol, str) and symbol in self._data:
             del self._data[symbol]
+
+    def override(self, other: 'StockDataTable') -> 'StockDataTable':
+        """
+        Returns a new StockDataTable by overriding this table's rows with other's rows.
+        Raises KeyError if this table has a key that is missing in the other table.
+        """
+        result = StockDataTable()
+        for symbol, dto in self._data.items():
+            if symbol not in other._data:
+                raise KeyError(f"Key '{symbol}' found in self but not in other table.")
+            result.add(dto.override(other._data[symbol]))
+        return result
 
     def __repr__(self) -> str:
         """

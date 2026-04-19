@@ -262,21 +262,16 @@ def test_fmp_data_override_yfinance_override_alpaca():
     table_alpaca = StockDataTable()
     
     for ticker in tickers_to_track:
-        dto_fmp = fmp.get_stock_data(ticker)
-        dto_yfinance = yfinance.get_stock_data(ticker)
-        dto_alpaca = alpaca.get_stock_data(ticker)
+        table_fmp.add(fmp.get_stock_data(ticker))
+        table_yfinance.add(yfinance.get_stock_data(ticker))
+        table_alpaca.add(alpaca.get_stock_data(ticker))
         
-        dto_result = dto_fmp.override(dto_yfinance).override(dto_alpaca)
-        
-        result_table.add(dto_result)
-        table_fmp.add(dto_fmp)
-        table_yfinance.add(dto_yfinance)
-        table_alpaca.add(dto_alpaca)
+    result_table = table_fmp.override(table_yfinance).override(table_alpaca)
         
     _logfile("Override operand 1 FMP", table_fmp)
     _logfile("Override operand 2 YFinance", table_yfinance)
     _logfile("Override operand 3 Alpaca", table_alpaca)
-    _logfile("Override Result FMP_YFinance_Alpaca", result_table, active_only=False)
+    _logfile("Override Result FMP_YFinance_Alpaca", result_table)
 
 
 def main():
