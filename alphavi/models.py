@@ -149,8 +149,7 @@ class StockDataTable:
             Optional[StockDataDTO]: The requested DTO or None if not found.
         """
         # Validate lookup key
-        if not symbol or not isinstance(symbol, str):
-            return None
+        if not symbol or not isinstance(symbol, str): return None
         # [Registry] (3): Retrieve the registered DTO by its unique key.
         return self._data.get(symbol)
 
@@ -164,8 +163,7 @@ class StockDataTable:
         Returns:
             List[StockDataDTO]: A list of stored DTOs.
         """
-        if active_only:
-            return [dto for dto in self._data.values() if getattr(dto, 'isActive', False)]
+        if active_only: return [dto for dto in self._data.values() if getattr(dto, 'isActive', False)]
         return list(self._data.values())
 
     def remove(self, symbol: str) -> None:
