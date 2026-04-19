@@ -267,6 +267,9 @@ def test_fmp_data_override_yfinance_override_alpaca():
         table_alpaca.add(alpaca.get_stock_data(ticker))
         
     result_table = table_fmp.override(table_yfinance).override(table_alpaca)
+
+    for dto in result_table.get_all(active_only=True):
+        print(repr(dto))
         
     _logfile("Override operand 1 FMP", table_fmp)
     _logfile("Override operand 2 YFinance", table_yfinance)
