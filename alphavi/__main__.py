@@ -221,6 +221,8 @@ def test_yfinance():
 
         # STRATEGY 3: Test Assets
         index_tickers = [
+            'COIN', 'CONY', 'CONL', # stragegy
+            'MSTR', 'MSTY', 'MSTU', # stragegy
             'GDXU', 'SLV','COPX','LIT', # minings
             'SPXL', 'SSO', 'SPY', # essentials
             'TQQQ', 'QLD', 'QQQ', 'QQQM', 'QQQU', # Tech

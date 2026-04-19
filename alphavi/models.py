@@ -15,27 +15,52 @@ class StockDataDTO:
     A Data Transfer Object representing a comprehensive set of financial metrics
     for a single stock symbol.
     """
+    # 0. internal logic flags
+    isActive: bool = False
+    isAnalyzed: bool = False
+    # 1. Profile
     symbol: str = ""
     name: str = ""
     industry: str = ""
     sector: str = ""
-    price: float = 0.0
-    rt_price: float = 0.0
-    latestChangePercent: float = 0.0
-    
-    # 1. Profile
     marketCap: float = 0.0
     beta: float = 0.0
     volume: int = 0
     averageVolume: int = 0
+    # 1. Position Data
+    qty: float = 0.0 # running data (Alpaca)
+    entry_price: float = 0.0 # running data (Alpaca)
+    rt_price: float = 0.0
+    price: float = 0.0
+    dcf: float = 0.0 # Discounted Cash Flow (fmp)
+    vwap: float = 0.0 # Volume Weighted Average Price (fmp)
+    # 2. Percent Change Indicators
+    pct_mad: float = 0.0 # pnl daily percent change, mean abolute deviation (fmp)
+    pct_sd: float = 0.0 # pnl daily percent change, standard deviation (fmp)
+
     
-    # 2. Ratios
+    # TODO: change naming convention so it is consistent
+    # pct_ prefix is needed, also, AlpacaService is not providing value in percents, it is rate (-0.00935, not -0.935 %)
+    latestChangePercent: float = 0.0 # daily pnl (Alpaca) 
+
+
+    pct_profit_and_loss: float = 0.0 # accumulated pnl (Alpaca)
+    
+    # 3. Historical (fmp)
+    priceAvg50: float = 0.0     # Simple Moving Average (SMA) - 50 days (fmp)
+    priceAvg200: float = 0.0    # Simple Moving Average (SMA) - 200 days (fmp)
+    rsi14: float = 0.0
+    r_squared: float = 0.0
+    slope: float = 0.0
+    zero_freq: int = 0
+    
+    # 4. Ratios
     priceToEarningsRatio: float = 0.0
     priceToEarningsGrowthRatio: float = 0.0
     debtToEquityRatio: float = 0.0
     freeCashFlowOperatingCashFlowRatio: float = 0.0
     
-    # 3. Key Metrics
+    # 5. Key Metrics
     currentRatio: float = 0.0
     enterpriseValue: float = 0.0
     returnOnInvestedCapital: float = 0.0
@@ -43,36 +68,16 @@ class StockDataDTO:
     incomeQuality: float = 0.0
     grahamNumber: float = 0.0
     
-    # 5. Discounted Cash Flow
-    dcf: float = 0.0
-    
-    # 6. Historical
-    vwap: float = 0.0
-    priceAvg50: float = 0.0
-    priceAvg200: float = 0.0
-    rsi14: float = 0.0
-    
-    r_squared: float = 0.0
-    slope: float = 0.0
-    zero_freq: int = 0
-    pct_mad: float = 0.0
-    pct_sd: float = 0.0
-    
-    # 7. Analyst Estimates
-    epsLow: float = 0.0
-    epsAvg: float = 0.0
-    epsHigh: float = 0.0
-
-    # Broker Data
+    # 6. Broker Data (Alpaca)
     shortable: bool = False
     fractionable: bool = False
+    
+    # 7. Analyst Estimates
+    epsLow: float = 0.0     # Earnings Per Share (fmp)
+    epsAvg: float = 0.0     # Earnings Per Share (fmp)
+    epsHigh: float = 0.0    # Earnings Per Share (fmp)
 
-    # Position Data
-    qty: float = 0.0
-    entry_price: float = 0.0
-    pct_profit_and_loss: float = 0.0
-    isActive: bool = False
-    isAnalyzed: bool = False
+
 
     def __repr__(self) -> str:
         """
