@@ -309,6 +309,18 @@ class AlpacaService:
         except (ValueError, TypeError):
             pass
         try:
+            dto.long_market_value = float(data.get("long_market_value", 0.0))
+        except (ValueError, TypeError):
+            pass
+        try:
+            dto.short_market_value = float(data.get("short_market_value", 0.0))
+        except (ValueError, TypeError):
+            pass
+        try:
+            dto.position_market_value = float(data.get("position_market_value", 0.0))
+        except (ValueError, TypeError):
+            pass
+        try:
             dto.buying_power = float(data.get("buying_power", 0.0))
         except (ValueError, TypeError):
             pass
