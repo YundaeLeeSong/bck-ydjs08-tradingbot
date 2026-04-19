@@ -247,6 +247,9 @@ class AccountDTO:
     cash: float = 0.0
     portfolio_value: float = 0.0
     equity: float = 0.0
+    # TODO: missing long_market_value, short_market_value, position_market_value fields, 
+    # refer to log/account_info.json, it is fetch file from Alpaca, you will be able 
+    # to know their field names.
     buying_power: float = 0.0
     initial_margin: float = 0.0
     maintenance_margin: float = 0.0
