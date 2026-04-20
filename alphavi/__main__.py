@@ -110,6 +110,7 @@ def test_alpaca():
         
         account_dto = service.get_account_info()
         _logfile("account_info", account_dto)
+        # print(f'[DEBUG] test_alpaca: purchasing power is now, ${service.get_unit_value(account_dto):.2f} for rebalance, long: {service.is_long(account_dto)}, short: {service.is_short(account_dto)}')
         
         orders_table = service.get_orders()
         _logfile("orders", orders_table)
@@ -279,9 +280,9 @@ def test_fmp_data_override_yfinance_override_alpaca():
 
 def main():
     # test_fmp()
-    # test_alpaca()
+    test_alpaca()
     # test_fmp_data_override_alpaca()
-    test_yfinance()
+    # test_yfinance()
     # test_fmp_data_override_yfinance_override_alpaca()
 
 

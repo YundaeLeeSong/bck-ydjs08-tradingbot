@@ -54,7 +54,8 @@ class AlpacaService:
     ):
         # [Singleton] (2): Initialize configuration once, ignore subsequent __init__ calls.
         if self._initialized:
-            print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value()} for rebalance')
+            account = self.get_account_info()
+            print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value(account):.2f} for rebalance, long: {self.is_long(account)}, short: {self.is_short(account)}')
             return
 
         self.base_url = base_url or get_env_var("APCA_API_BASE_URL")
@@ -73,7 +74,8 @@ class AlpacaService:
         }
         self._assets_cache: Optional[List[dict]] = None
         self._initialized = True
-        print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value()} for rebalance')
+        account = self.get_account_info()
+        print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value(account):.2f} for rebalance, long: {self.is_long(account)}, short: {self.is_short(account)}')
 
     def fetch_endpoint(self, endpoint: str, params: Optional[dict] = None) -> Any:
         """
@@ -341,13 +343,61 @@ class AlpacaService:
             
         return dto
 
-    def get_unit_value(self) -> float:
+    def get_unit_value(self, account: Optional[AccountDTO] = None) -> float:
         """
         Calculates the unit value dynamically.
         Formula: (equity - maintenance_margin) / 120.0
         """
-        account = self.get_account_info()
+        account = account or self.get_account_info()
         return (account.equity - account.maintenance_margin) / 120.0
+
+    def is_long(self, account: Optional[AccountDTO] = None) -> bool:
+        """
+        Determines if the account is in a healthy state to open new long positions.
+        """
+        account = account or self.get_account_info()
+        
+        # Prevent division by zero
+        if account.maintenance_margin <= 0 or account.equity <= 0:
+            return False
+
+        # 1. Check margin health (>1.5 ratio)
+        if (account.equity / account.maintenance_margin) <= 1.5:
+            return False
+        
+        # 2. Check liquid cash reserve (>15% of equity)
+        if (account.cash / account.equity) <= 0.15:
+            return False
+
+        return True
+
+    def is_short(self, account: Optional[AccountDTO] = None) -> bool:
+        """
+        Determines if the account is in a healthy state to open new short positions.
+        """
+        account = account or self.get_account_info()
+
+        # Prevent division by zero
+        if account.maintenance_margin <= 0 or account.equity <= 0 or account.long_market_value <= 0:
+            return False
+
+        # 1. Check margin health (>1.5 ratio)
+        if (account.equity / account.maintenance_margin) <= 1.5:
+            return False
+
+        # 2. Check long collateral (>50% of equity)
+        if (account.long_market_value / account.equity) <= 0.5:
+            return False
+
+        # 3. Check short exposure limit (<50% of long portfolio)
+        if (abs(account.short_market_value) / account.long_market_value) >= 0.5:
+            return False
+        
+        # 4. Ensure positive buying power
+        if account.buying_power <= 0:
+            return False
+
+        return True
 
     def get_stock_data(self, ticker: str) -> StockDataDTO:
         """
