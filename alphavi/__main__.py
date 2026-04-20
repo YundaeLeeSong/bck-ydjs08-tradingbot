@@ -278,9 +278,68 @@ def test_fmp_data_override_yfinance_override_alpaca():
     _logfile("Override Result FMP_YFinance_Alpaca", result_table)
 
 
+def test_orders():
+    """
+    Test routine to execute Alpaca endpoints for creating and canceling orders.
+    """
+    from alphavi.fmp import FMPService
+    from alphavi.yfinance import YFinanceService
+    from alphavi.alpaca import AlpacaService
+    
+    try:
+        yfinance = YFinanceService()
+        alpaca = AlpacaService()
+        
+        # We will test using AAPL and NVDA. Ensure we have their full DTOs
+        # 1. Fetch from all sources
+        aapl_yf = yfinance.get_stock_data("AAPL")
+        aapl_alpaca = alpaca.get_stock_data("AAPL")
+
+        nvda_yf = yfinance.get_stock_data("NVDA")
+        nvda_alpaca = alpaca.get_stock_data("NVDA")
+
+        # 2. Override FMP -> YFinance -> Alpaca to get the final unified DTO
+        aapl_dto = aapl_yf.override(aapl_alpaca)
+        nvda_dto = nvda_yf.override(nvda_alpaca)
+
+        print("\n--- [TEST] POSTING ORDERS ---")
+        
+        # Test 1: Buy AAPL (fractionable handling check)
+        # Use Standard Deviation (SD) to lower the buy limit price
+        aapl_buy_price = aapl_dto.rt_price * (1 - (aapl_dto.pct_sd / 100))
+        print(f"Testing POST buy for AAPL (qty: 0.123, limit: {aapl_buy_price:.2f} based on SD: {aapl_dto.pct_sd}%)")
+        alpaca.post_order(aapl_dto, side="buy", qty=aapl_dto.qty * 2, limit_price=aapl_buy_price)
+
+        # Test 2: Sell NVDA
+        # Use Standard Deviation (SD) to raise the sell limit price
+        nvda_sell_price = nvda_dto.rt_price * (1 + (nvda_dto.pct_sd / 100))
+        print(f"Testing POST sell for NVDA (qty: 1.5, limit: {nvda_sell_price:.2f} based on SD: {nvda_dto.pct_sd}%)")
+        alpaca.post_order(nvda_dto, side="sell", qty=nvda_dto.qty - 0.01, limit_price=nvda_sell_price)
+
+        print("\n--- [TEST] FETCHING ACTIVE ORDERS ---")
+        orders_table = alpaca.get_orders()
+        _logfile("orders_post_test", orders_table)
+        print(f"Active orders found: {len(orders_table.get_all())}")
+        for order in orders_table.get_all():
+            print(f"  {order.symbol}: {order.side} {order.qty} @ ${order.limit_price} (ID: {order.id})")
+
+        # print("\n--- [TEST] DELETING ORDERS ---")
+        # # Test 3: Delete AAPL and NVDA orders
+        # print("Testing delete_all_orders (Clears everything)")
+        # alpaca.delete_all_orders()
+
+        # print("\n--- [TEST] VERIFYING DELETIONS ---")
+        # orders_table_after = alpaca.get_orders()
+        # _logfile("orders_after_delete_test", orders_table_after)
+        # print(f"Active orders found after deletion: {len(orders_table_after.get_all())}")
+
+    except Exception as e:
+        print(f"Error in test_orders: {e}")
+
 def main():
     # test_fmp()
-    test_alpaca()
+    # test_alpaca()
+    test_orders()
     # test_fmp_data_override_alpaca()
     # test_yfinance()
     # test_fmp_data_override_yfinance_override_alpaca()

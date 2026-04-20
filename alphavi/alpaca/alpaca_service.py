@@ -8,11 +8,13 @@ response snapshots and report files to disk; otherwise no file I/O is performed.
 
 import os
 import json
+import math
 import requests
 from typing import Optional, Any, List
 from alphavi_util.core import get_env_var
 
 from alphavi.models import StockDataDTO, StockDataTable, ActiveOrderDTO, ActiveOrderTable, AccountDTO
+from .est_timer import ESTTimer
 
 _DEBUG_LOG_ = "log_alpaca"
 
@@ -74,16 +76,19 @@ class AlpacaService:
         }
         self._assets_cache: Optional[List[dict]] = None
         self._initialized = True
+        
         account = self.get_account_info()
         print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value(account):.2f} for rebalance, long: {self.is_long(account)}, short: {self.is_short(account)}')
 
-    def fetch_endpoint(self, endpoint: str, params: Optional[dict] = None) -> Any:
+    def fetch_endpoint(self, endpoint: str, params: Optional[dict] = None, method: str = "GET", data: Optional[dict] = None) -> Any:
         """
-        Executes a GET request against the Alpaca API and returns the parsed JSON.
+        Executes a request against the Alpaca API and returns the parsed JSON.
         
         Args:
             endpoint (str): The specific API endpoint (e.g., 'account', 'assets').
             params (Optional[dict]): Query parameters to attach to the request.
+            method (str): The HTTP method ('GET', 'POST', 'DELETE'). Defaults to 'GET'.
+            data (Optional[dict]): The JSON payload for POST requests.
             
         Returns:
             Any: The JSON response parsed as a Python dict/list, or None on failure/restriction.
@@ -94,33 +99,45 @@ class AlpacaService:
         payload = params.copy() if params else {}
         
         try:
-            response = requests.get(url, headers=self.headers, params=payload)
+            if method.upper() == "GET":
+                response = requests.get(url, headers=self.headers, params=payload)
+            elif method.upper() == "POST":
+                response = requests.post(url, headers=self.headers, params=payload, json=data)
+            elif method.upper() == "DELETE":
+                response = requests.delete(url, headers=self.headers, params=payload)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
 
             file_path = None
             if self.debug:
                 os.makedirs(_DEBUG_LOG_, exist_ok=True)
                 safe_endpoint = clean_endpoint.replace("/", "_")
+                if method.upper() != "GET":
+                    safe_endpoint = f"{method.lower()}_{safe_endpoint}"
                 if params and "activity_types" in params:
                     safe_endpoint += f"_{params['activity_types']}"
                 elif params and "status" in params:
                     safe_endpoint += f"_status_{params['status']}"
                 file_path = os.path.join(_DEBUG_LOG_, f"alpaca_{safe_endpoint}.json")
 
-            if response.status_code == 200:
-                data = response.json()
+            if response.status_code in (200, 201, 204):
+                if response.status_code == 204 or not response.text:
+                    resp_data = {}
+                else:
+                    resp_data = response.json()
 
                 # Client-side filtering: Remove assets where "tradable" is false
-                if clean_endpoint.startswith("assets") and isinstance(data, list):
-                    data = [item for item in data if item.get("tradable", True)]
+                if clean_endpoint.startswith("assets") and isinstance(resp_data, list):
+                    resp_data = [item for item in resp_data if item.get("tradable", True)]
 
                 # Client-side filtering fallback: ensure only 'accepted' status if requested
-                if clean_endpoint.startswith("orders") and params and params.get("status") == "accepted" and isinstance(data, list):
-                    data = [item for item in data if item.get("status") == "accepted"]
+                if method.upper() == "GET" and clean_endpoint.startswith("orders") and params and params.get("status") == "accepted" and isinstance(resp_data, list):
+                    resp_data = [item for item in resp_data if item.get("status") == "accepted"]
 
                 if self.debug and file_path is not None:
                     with open(file_path, "w") as f:
-                        json.dump(data, f, indent=4)
-                return data
+                        json.dump(resp_data, f, indent=4)
+                return resp_data
             else:
                 if self.debug and file_path is not None:
                     try:
@@ -444,7 +461,7 @@ class AlpacaService:
                 
         # Fetch asset info to get shortable and fractionable status
         asset_data = self.fetch_endpoint(f"assets/{ticker}")
-        print(asset_data)
+        # print(asset_data)
         if asset_data and isinstance(asset_data, dict):
             dto.shortable = asset_data.get("shortable", False)
             dto.fractionable = asset_data.get("fractionable", False)
@@ -452,6 +469,74 @@ class AlpacaService:
                 dto.name = asset_data.get("name", "")
                 
         return dto
+
+    def _delete_order(self, dto: StockDataDTO, current_orders: Optional[ActiveOrderTable] = None) -> None:
+        """
+        Internal: Cancels all open orders for a specific ticker.
+        If `current_orders` is provided, skips fetching the orders again.
+        """
+        open_orders = current_orders or self.get_orders()
+        for order in open_orders.get_all():
+            if order.symbol == dto.symbol:
+                response = self.fetch_endpoint(f"orders/{order.id}", method="DELETE")
+                if response is not None:
+                    print(f"  [OK] Canceled order {order.id} for {dto.symbol}")
+
+    def delete_all_orders(self) -> None:
+        """
+        Cancels all open orders currently active in the account.
+        """
+        open_orders = self.get_orders()
+        orders_list = open_orders.get_all()
+        if not orders_list:
+            print("  [INFO] No active orders to delete.")
+            return
+
+        for order in orders_list:
+            response = self.fetch_endpoint(f"orders/{order.id}", method="DELETE")
+            if response is not None:
+                print(f"  [OK] Canceled order {order.id} for {order.symbol}")
+
+    def post_order(self, dto: StockDataDTO, side: str, qty: float, limit_price: float, current_orders: Optional[ActiveOrderTable] = None) -> Optional[dict]:
+        """
+        Places a limit order for the given asset symbol.
+        Enforces day-only Time-in-Force and dynamically calculates extended hours.
+        Quantities and prices are polished and validated before posting.
+        Also guarantees any existing open orders for this ticker are deleted first.
+        Pass `current_orders` if performing batch operations to prevent redundant API fetches.
+        """
+        if side not in ("buy", "sell"): 
+            raise ValueError(f"side must be 'buy' or 'sell', got: {side}")
+            
+        # 1. Polish
+        polished_price = round(limit_price, 2)
+        polished_qty = round(qty, 2)
+        if not dto.fractionable: polished_qty = float(math.floor(qty))
+        
+        # 2. Validate
+        if polished_qty <= 0 or polished_price <= 0:
+            print(f"[DEBUG] Invalid order for {dto.symbol}: "
+                  f"qty={polished_qty}, price={polished_price}. Must be > 0.")
+            return None
+
+        # 3. Clean slate: Delete existing orders for this specific ticker
+        self._delete_order(dto, current_orders=current_orders)
+
+        # 4. Post the new order
+        payload = {
+            "symbol": dto.symbol,
+            "side": side,
+            "type": "limit",
+            "time_in_force": "day",
+            "qty": polished_qty,
+            "limit_price": polished_price,
+            "extended_hours": ESTTimer().is_extended_hours()
+        }
+        
+        response = self.fetch_endpoint("orders", method="POST", data=payload)
+        if response is not None:
+            print(f"  [OK] Limit {side} order placed for {dto.symbol} x {polished_qty} @ ${polished_price}")
+        return response
 
     def report(self) -> None:
         """
