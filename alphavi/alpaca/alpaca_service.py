@@ -344,10 +344,10 @@ class AlpacaService:
     def get_unit_value(self) -> float:
         """
         Calculates the unit value dynamically.
-        Formula: (equity - maintenance_margin) / 100.0
+        Formula: (equity - maintenance_margin) / 120.0
         """
         account = self.get_account_info()
-        return (account.equity - account.maintenance_margin) / 100.0
+        return (account.equity - account.maintenance_margin) / 120.0
 
     def get_stock_data(self, ticker: str) -> StockDataDTO:
         """

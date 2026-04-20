@@ -224,8 +224,8 @@ def test_yfinance():
 
         # STRATEGY 3: Test Assets
         index_tickers = [
-            'COIN', 'CONY', 'CONL', # stragegy
-            'MSTR', 'MSTY', 'MSTU', # stragegy
+            'COIN', 'CONY', 'CONL', # coinbase
+            'MSTR', 'MSTY', 'MSTU', 'STRC', 'STRK', 'STRD', 'STRF', # stragegy
             'GDXU', 'SLV','COPX','LIT', # minings
             'SPXL', 'SSO', 'SPY', # essentials
             'TQQQ', 'QLD', 'QQQ', 'QQQM', 'QQQU', # Tech
@@ -281,8 +281,8 @@ def main():
     # test_fmp()
     # test_alpaca()
     # test_fmp_data_override_alpaca()
-    # test_yfinance()
-    test_fmp_data_override_yfinance_override_alpaca()
+    test_yfinance()
+    # test_fmp_data_override_yfinance_override_alpaca()
 
 
 
