@@ -301,6 +301,10 @@ def test_orders():
         # 2. Override FMP -> YFinance -> Alpaca to get the final unified DTO
         aapl_dto = aapl_yf.override(aapl_alpaca)
         nvda_dto = nvda_yf.override(nvda_alpaca)
+        short_ticker = 'AAOI'
+        short_dto = \
+            yfinance.get_stock_data(short_ticker)\
+            .override(alpaca.get_stock_data(short_ticker))
 
         print("\n--- [TEST] POSTING ORDERS ---")
         
@@ -315,6 +319,13 @@ def test_orders():
         nvda_sell_price = nvda_dto.rt_price * (1 + (nvda_dto.pct_sd / 100))
         print(f"Testing POST sell for NVDA (qty: 1.5, limit: {nvda_sell_price:.2f} based on SD: {nvda_dto.pct_sd}%)")
         alpaca.post_order(nvda_dto, side="sell", qty=nvda_dto.qty - 0.01, limit_price=nvda_sell_price)
+
+
+        sell_price = short_dto.price * (1 + (short_dto.pct_sd / 100))
+        print(f"Testing POST sell for ***** limit: {sell_price:.2f} based on SD: {short_dto.pct_sd}%)")
+        alpaca.post_order(short_dto, side="sell", qty=100, limit_price=sell_price)
+
+        
 
         print("\n--- [TEST] FETCHING ACTIVE ORDERS ---")
         orders_table = alpaca.get_orders()

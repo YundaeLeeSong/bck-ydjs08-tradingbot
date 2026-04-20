@@ -511,7 +511,8 @@ class AlpacaService:
         # 1. Polish
         polished_price = round(limit_price, 2)
         polished_qty = round(qty, 2)
-        if not dto.fractionable: polished_qty = float(math.floor(qty))
+        if not dto.fractionable: polished_qty = float(math.floor(qty))   # non-fract
+        if dto.qty == 0: polished_qty = float(math.floor(qty))           # short
         
         # 2. Validate
         if polished_qty <= 0 or polished_price <= 0:
@@ -519,10 +520,22 @@ class AlpacaService:
                   f"qty={polished_qty}, price={polished_price}. Must be > 0.")
             return None
 
-        # 3. Clean slate: Delete existing orders for this specific ticker
+        # 3. Short selling validation
+        if (not dto.shortable and side == "sell" and dto.qty == 0):
+            print(f"[DEBUG] Cannot short sell {dto.symbol}: "
+                  f"Asset is not shortable (requested: {polished_qty}, owned: {dto.qty}).")
+            return None
+        
+        if (side == "sell" and dto.qty > 0 and polished_qty > dto.qty):
+            print(f"[DEBUG] Cannot sell {dto.symbol}: "
+                  f"You should sell off ALL the long position "
+                  f"**{dto.qty} > 0** shares you own (requested: {polished_qty}, owned: {dto.qty}).")
+            return None
+
+        # 4. Clean slate: Delete existing orders for this specific ticker
         self._delete_order(dto, current_orders=current_orders)
 
-        # 4. Post the new order
+        # 5. Post the new order
         payload = {
             "symbol": dto.symbol,
             "side": side,
