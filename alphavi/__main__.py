@@ -33,13 +33,19 @@ def _logfile(name: str, table, active_only: bool = True):
     os.makedirs("log", exist_ok=True)
     log_file = os.path.join("log", f"{name.lower().replace(' ', '_')}.json")
     
-    if hasattr(table, '_data'):
+    if hasattr(table, 'get_all'):
         import json
         from dataclasses import asdict
-        if active_only:
-            filtered_data = {k: asdict(v) for k, v in table._data.items() if getattr(v, 'isActive', True)}
-        else:
-            filtered_data = {k: asdict(v) for k, v in table._data.items()}
+        try:
+            dtos = table.get_all(active_only=active_only)
+        except TypeError:
+            dtos = table.get_all()
+            
+        filtered_data = {}
+        for dto in dtos:
+            key = getattr(dto, 'symbol', getattr(dto, 'id', None))
+            if key is not None:
+                filtered_data[key] = asdict(dto)
         content = json.dumps(filtered_data, indent=2)
     else:
         content = repr(table)
@@ -301,7 +307,7 @@ def test_orders():
         # 2. Override FMP -> YFinance -> Alpaca to get the final unified DTO
         aapl_dto = aapl_yf.override(aapl_alpaca)
         nvda_dto = nvda_yf.override(nvda_alpaca)
-        short_ticker = 'AAOI'
+        short_ticker = 'CAR'
         short_dto = \
             yfinance.get_stock_data(short_ticker)\
             .override(alpaca.get_stock_data(short_ticker))
@@ -349,11 +355,11 @@ def test_orders():
 
 def main():
     # test_fmp()
-    # test_alpaca()
-    # test_orders()
+    test_alpaca()
     # test_fmp_data_override_alpaca()
-    test_yfinance()
+    # test_yfinance()
     # test_fmp_data_override_yfinance_override_alpaca()
+    # test_orders()
 
 
 

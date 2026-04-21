@@ -368,6 +368,21 @@ class AlpacaService:
         account = account or self.get_account_info()
         return (account.equity - account.maintenance_margin) / 120.0
 
+    def get_cash_rate(self, account: Optional[AccountDTO] = None) -> float:
+        """
+        Returns the ratio of cash to equity in the account.
+        """
+        account = account or self.get_account_info()
+        if account.equity <= 0:
+            return 0.0
+        return account.cash / account.equity
+
+    def is_entry(self, account: Optional[AccountDTO] = None) -> bool:
+        """
+        Returns true if the cash-to-equity ratio is greater than 0.7 (70%).
+        """
+        return self.get_cash_rate(account) > 0.7
+
     def is_long(self, account: Optional[AccountDTO] = None) -> bool:
         """
         Determines if the account is in a healthy state to open new long positions.
