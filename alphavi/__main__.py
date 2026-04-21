@@ -15,7 +15,7 @@ from alphavi.yfinance import YFinanceService
 from alphavi.alpaca import AlpacaService
 from alphavi.framework import BaseTradingFramework
 
-class TradingBot(BaseTradingFramework):
+class Bumblebee(BaseTradingFramework):
     def initialize(self):
         # TODO: Implement initialization logic
         pass
@@ -392,7 +392,7 @@ def main():
     # test_orders()
 
     print("\n--- Starting Trading Bot ---")
-    bot = TradingBot(alpaca_service=alpaca, yfinance_service=yfinance)
+    bot = Bumblebee(alpaca_service=alpaca, yfinance_service=yfinance)
     bot.execute()
 
 if __name__ == "__main__":

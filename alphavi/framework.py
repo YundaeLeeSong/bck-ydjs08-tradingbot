@@ -1,3 +1,10 @@
+"""
+Framework module for the alphavi project.
+
+Provides the base trading framework that defines the skeleton of the trading
+strategy, deferring specific implementation steps to subclasses.
+"""
+
 from typing import List
 from alphavi.alpaca import AlpacaService
 from alphavi.yfinance import YFinanceService
@@ -5,12 +12,22 @@ from alphavi.models import AccountDTO, ActiveOrderTable
 
 class BaseTradingFramework:
     """
-    Template Method Design Pattern for Trading Strategy Execution.
-    
-    The base framework provides the skeleton of the algorithm (execute()), 
-    deferring specific trading logic steps to subclasses.
+    Base class for trading strategy execution.
     """
+    
     def __init__(self, alpaca_service: AlpacaService, yfinance_service: YFinanceService):
+        """
+        Initializes the framework with required API services and fetches initial state.
+        
+        Args:
+            alpaca_service (AlpacaService): The instantiated Alpaca API service.
+            yfinance_service (YFinanceService): The instantiated Yahoo Finance API service.
+        """
+        if not alpaca_service or not isinstance(alpaca_service, AlpacaService):
+            raise ValueError("A valid AlpacaService instance is required.")
+        if not yfinance_service or not isinstance(yfinance_service, YFinanceService):
+            raise ValueError("A valid YFinanceService instance is required.")
+
         self.alpaca = alpaca_service
         self.yfinance = yfinance_service
 
@@ -52,8 +69,10 @@ class BaseTradingFramework:
 
         self._report_state()
 
-    def _report_state(self):
-        """Reports the instance variables value on console."""
+    def _report_state(self) -> None:
+        """
+        Reports the instance variables value on console.
+        """
         print("\n" + "="*60)
         print(" TRADING FRAMEWORK INITIALIZATION REPORT")
         print("="*60)
@@ -71,11 +90,11 @@ class BaseTradingFramework:
         print(f"[Data] Loser Tickers:        {self.loser_tickers}")
         print("="*60 + "\n")
 
-    def execute(self):
+    def execute(self) -> None:
         """
-        Template method that defines the skeleton of the trading algorithm.
-        Subclasses should not override this method.
+        Executes the overall trading algorithmic sequence.
         """
+        # [TemplateMethod] (1): Define the skeleton of the algorithm, invoking deferred logic.
         self._initialize()
         self._stock_up_long()
         self._rebalance_long()
@@ -84,24 +103,31 @@ class BaseTradingFramework:
         self._rebalance_short()
         self._close_short()
 
-    # Primitive operations to be implemented by subclasses
-    def _initialize(self):
+    # [TemplateMethod] (2): Primitive operations to be implemented by concrete subclasses.
+    def _initialize(self) -> None:
+        """Executes initialization steps for the trading strategy."""
         pass
 
-    def _stock_up_long(self):
+    def _stock_up_long(self) -> None:
+        """Executes logic for stocking up long positions."""
         pass
 
-    def _rebalance_long(self):
+    def _rebalance_long(self) -> None:
+        """Executes logic for rebalancing long positions."""
         pass
 
-    def _liquidate_long(self):
+    def _liquidate_long(self) -> None:
+        """Executes logic for liquidating long positions."""
         pass
 
-    def _stock_up_short(self):
+    def _stock_up_short(self) -> None:
+        """Executes logic for stocking up short positions."""
         pass
 
-    def _rebalance_short(self):
+    def _rebalance_short(self) -> None:
+        """Executes logic for rebalancing short positions."""
         pass
 
-    def _close_short(self):
+    def _close_short(self) -> None:
+        """Executes logic for closing short positions."""
         pass
