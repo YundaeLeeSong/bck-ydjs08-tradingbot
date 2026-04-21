@@ -13,6 +13,36 @@ from alphavi import load_market_data
 from alphavi.fmp import FMPService
 from alphavi.yfinance import YFinanceService
 from alphavi.alpaca import AlpacaService
+from alphavi.framework import BaseTradingFramework
+
+class TradingBot(BaseTradingFramework):
+    def initialize(self):
+        # TODO: Implement initialization logic
+        pass
+
+    def stock_up_long(self):
+        # TODO: Implement long stock up logic
+        pass
+
+    def rebalance_long(self):
+        # TODO: Implement long rebalance logic
+        pass
+
+    def liquidate_long(self):
+        # TODO: Implement long liquidation logic
+        pass
+
+    def stock_up_short(self):
+        # TODO: Implement short stock up logic
+        pass
+
+    def rebalance_short(self):
+        # TODO: Implement short rebalance logic
+        pass
+
+    def close_short(self):
+        # TODO: Implement short close logic
+        pass
 
 try:
     # [Singleton] (3): Initialize the services early to validate the API keys and start debug modes.
@@ -355,13 +385,15 @@ def test_orders():
 
 def main():
     # test_fmp()
-    test_alpaca()
+    # test_alpaca()
     # test_fmp_data_override_alpaca()
     # test_yfinance()
     # test_fmp_data_override_yfinance_override_alpaca()
     # test_orders()
 
-
+    print("\n--- Starting Trading Bot ---")
+    bot = TradingBot(alpaca_service=alpaca, yfinance_service=yfinance)
+    bot.execute()
 
 if __name__ == "__main__":
     main()
