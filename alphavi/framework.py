@@ -5,31 +5,27 @@ Provides the base trading framework that defines the skeleton of the trading
 strategy, deferring specific implementation steps to subclasses.
 """
 
-from typing import List
+from typing import List, Optional
 from alphavi.alpaca import AlpacaService
 from alphavi.yfinance import YFinanceService
 from alphavi.models import AccountDTO, ActiveOrderTable
 
-class BaseTradingFramework:
+class AbstractTradingBot:
     """
     Base class for trading strategy execution.
     """
     
-    def __init__(self, alpaca_service: AlpacaService, yfinance_service: YFinanceService):
+    def __init__(self, alpaca_service: Optional[AlpacaService] = None, yfinance_service: Optional[YFinanceService] = None):
         """
         Initializes the framework with required API services and fetches initial state.
         
         Args:
-            alpaca_service (AlpacaService): The instantiated Alpaca API service.
-            yfinance_service (YFinanceService): The instantiated Yahoo Finance API service.
+            alpaca_service (Optional[AlpacaService]): The instantiated Alpaca API service. If None, retrieves the Singleton instance.
+            yfinance_service (Optional[YFinanceService]): The instantiated Yahoo Finance API service. If None, retrieves the Singleton instance.
         """
-        if not alpaca_service or not isinstance(alpaca_service, AlpacaService):
-            raise ValueError("A valid AlpacaService instance is required.")
-        if not yfinance_service or not isinstance(yfinance_service, YFinanceService):
-            raise ValueError("A valid YFinanceService instance is required.")
-
-        self.alpaca = alpaca_service
-        self.yfinance = yfinance_service
+        # [Singleton] (3): Invoke instance method to retrieve the single instance if not provided explicitly.
+        self.alpaca = alpaca_service or AlpacaService()
+        self.yfinance = yfinance_service or YFinanceService()
 
         self.account_dto: AccountDTO = self.alpaca.get_account_info()
         self.orders_table: ActiveOrderTable = self.alpaca.get_orders()
@@ -57,12 +53,12 @@ class BaseTradingFramework:
             self.alpaca.get_tickers(["Leveraged", "3X"], ["Inverse"])
         )
 
-        self.winner_tickers: List[str] = self.yfinance.get_winner_tickers(
+        self.winning_tickers_to_short: List[str] = self.yfinance.get_winner_tickers(
             max_mcap=100_000_000_000,
             min_change=15.0
         )
 
-        self.loser_tickers: List[str] = self.yfinance.get_loser_tickers(
+        self.loser_tickers_to_long: List[str] = self.yfinance.get_loser_tickers(
             min_mcap=100_000_000_000,
             max_change=-4.5
         )
@@ -86,8 +82,8 @@ class BaseTradingFramework:
         print(f"[Data] Index Tickers:        {self.index_tickers}")
         print(f"[Data] Index Tickers x2:     {self.index_tickers_x2}")
         print(f"[Data] Index Tickers x3:     {self.index_tickers_x3}")
-        print(f"[Data] Winner Tickers:       {self.winner_tickers}")
-        print(f"[Data] Loser Tickers:        {self.loser_tickers}")
+        print(f"[Data] Winning Tickers (Short): {self.winning_tickers_to_short}")
+        print(f"[Data] Loser Tickers (Long):    {self.loser_tickers_to_long}")
         print("="*60 + "\n")
 
     def execute(self) -> None:

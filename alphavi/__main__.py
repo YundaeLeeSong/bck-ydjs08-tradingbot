@@ -13,36 +13,7 @@ from alphavi import load_market_data
 from alphavi.fmp import FMPService
 from alphavi.yfinance import YFinanceService
 from alphavi.alpaca import AlpacaService
-from alphavi.framework import BaseTradingFramework
-
-class Bumblebee(BaseTradingFramework):
-    def initialize(self):
-        # TODO: Implement initialization logic
-        pass
-
-    def stock_up_long(self):
-        # TODO: Implement long stock up logic
-        pass
-
-    def rebalance_long(self):
-        # TODO: Implement long rebalance logic
-        pass
-
-    def liquidate_long(self):
-        # TODO: Implement long liquidation logic
-        pass
-
-    def stock_up_short(self):
-        # TODO: Implement short stock up logic
-        pass
-
-    def rebalance_short(self):
-        # TODO: Implement short rebalance logic
-        pass
-
-    def close_short(self):
-        # TODO: Implement short close logic
-        pass
+from alphavi.framework import AbstractTradingBot
 
 try:
     # [Singleton] (3): Initialize the services early to validate the API keys and start debug modes.
@@ -383,6 +354,48 @@ def test_orders():
     except Exception as e:
         print(f"Error in test_orders: {e}")
 
+
+
+
+
+
+
+
+class Bumblebee(AbstractTradingBot):
+    def _initialize(self):
+        # TODO: Implement initialization logic
+        pass
+
+    def _stock_up_long(self):
+        # TODO: Implement long stock up logic
+        # 1. get positions from alpaca
+        # 2. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
+        # 3. target is to stock up long positioned tickers (qty > 0), with uniform amount, (unit_value / 4)
+        # 4. tickers need to be considered will be loss of < - 10 * max(SD, MAD) or gain of > + 3 * max(SD, MAD)
+        # 5. when post order, in the method, right before you execute fetch, print debug string to show which tickers are being stocked up with what qty, price, value (since they are polished)
+        pass
+
+    def _rebalance_long(self):
+        # TODO: Implement long rebalance logic
+        pass
+
+    def _liquidate_long(self):
+        # TODO: Implement long liquidation logic
+        pass
+
+    def _stock_up_short(self):
+        # TODO: Implement short stock up logic
+        pass
+
+    def _rebalance_short(self):
+        # TODO: Implement short rebalance logic
+        pass
+
+    def _close_short(self):
+        # TODO: Implement short close logic
+        pass
+
+
 def main():
     # test_fmp()
     # test_alpaca()
@@ -392,7 +405,7 @@ def main():
     # test_orders()
 
     print("\n--- Starting Trading Bot ---")
-    bot = Bumblebee(alpaca_service=alpaca, yfinance_service=yfinance)
+    bot = Bumblebee()
     bot.execute()
 
 if __name__ == "__main__":
