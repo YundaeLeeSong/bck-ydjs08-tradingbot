@@ -14,7 +14,7 @@ from typing import Optional, Any, List
 from alphavi_util.core import get_env_var
 
 from alphavi.models import StockDataDTO, StockDataTable, ActiveOrderDTO, ActiveOrderTable, AccountDTO
-from .est_timer import ESTTimer
+from alphavi_util.est_timer import ESTTimer
 
 _DEBUG_LOG_ = "log_alpaca"
 
@@ -230,11 +230,11 @@ class AlpacaService:
             except (ValueError, TypeError):
                 pass
             try:
-                dto.pct_latest_change = float(pos.get("change_today", 0.0)) * 100
+                dto.pct_day_pnl = float(pos.get("change_today", 0.0)) * 100
             except (ValueError, TypeError):
                 pass
             try:
-                dto.pct_profit_and_loss = float(pos.get("unrealized_plpc", 0.0))
+                dto.pct_net_pnl = float(pos.get("unrealized_plpc", 0.0)) * 100
             except (ValueError, TypeError):
                 pass
             table.add(dto)
@@ -563,7 +563,7 @@ class AlpacaService:
         
         response = self.fetch_endpoint("orders", method="POST", data=payload)
         if response is not None:
-            print(f"  [OK] Limit {side} order placed for {dto.symbol} x {polished_qty} @ ${polished_price}")
+            print(f"  [OK] Limit {side} order placed: [{dto.symbol}] {polished_qty} @ ${polished_price} = ${polished_qty * polished_price:.2f}")
         return response
 
     def report(self) -> None:

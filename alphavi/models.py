@@ -37,8 +37,8 @@ class StockDataDTO:
     # 2. Percent Change Indicators
     pct_mad: float = 0.0 # pnl daily percent change, mean abolute deviation (fmp)
     pct_sd: float = 0.0 # pnl daily percent change, standard deviation (fmp)
-    pct_latest_change: float = 0.0 # daily pnl (Alpaca) 
-    pct_profit_and_loss: float = 0.0 # accumulated pnl (Alpaca)
+    pct_day_pnl: float = 0.0 # daily pnl (Alpaca) 
+    pct_net_pnl: float = 0.0 # accumulated pnl (Alpaca)
     
     # 3. Historical
     priceAvg50: float = 0.0     # Simple Moving Average (SMA) - 50 days (yfinance)

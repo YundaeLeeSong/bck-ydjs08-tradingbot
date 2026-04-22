@@ -15,8 +15,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from typing import List, Optional
 from alphavi.models import StockDataDTO, StockDataTable
-from alphavi.yfinance.matplotlib_service import generate_all_plots
-from alphavi.yfinance.analysis_service import analyze_stock_data
+from alphavi.bumblebee.external.matplotlib_service import generate_all_plots
+from alphavi.bumblebee.external.analysis_service import analyze_stock_data
 
 # Suppress specific pandas warnings triggered by yfinance
 warnings.filterwarnings("ignore", message=".*Timestamp.utcnow is deprecated.*")
@@ -229,7 +229,7 @@ class YFinanceService:
         dto = StockDataDTO(
             symbol=symbol,
             price=price,
-            pct_latest_change=change_pct,
+            pct_day_pnl=change_pct,
             volume=volume,
             marketCap=mcap,
             sector=sector,

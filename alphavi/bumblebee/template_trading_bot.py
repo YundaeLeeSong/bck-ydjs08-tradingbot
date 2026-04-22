@@ -6,11 +6,11 @@ strategy, deferring specific implementation steps to subclasses.
 """
 
 from typing import List, Optional
-from alphavi.alpaca import AlpacaService
-from alphavi.yfinance import YFinanceService
+from alphavi.bumblebee.external import AlpacaService
+from alphavi.bumblebee.external import YFinanceService
 from alphavi.models import AccountDTO, ActiveOrderTable
 
-class AbstractTradingBot:
+class TemplateTradingBot:
     """
     Base class for trading strategy execution.
     """

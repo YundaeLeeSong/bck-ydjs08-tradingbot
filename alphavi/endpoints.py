@@ -8,7 +8,7 @@ market data models from external data sources.
 from typing import List
 from alphavi.models import StockDataTable
 # [Facade] (2): Consume the internal service via the clean, exposed interface.
-from alphavi.fmp import FMPService
+from alphavi.bumblebee.external import FMPService
 
 def load_market_data(tickers: List[str]) -> StockDataTable:
     """

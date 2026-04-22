@@ -8,12 +8,13 @@ of the top-level market data loading endpoints.
 
 import sys
 import os
+import math
 # [Facade] (2): Consume the root facade to execute the high-level application flow.
 from alphavi import load_market_data
-from alphavi.fmp import FMPService
-from alphavi.yfinance import YFinanceService
-from alphavi.alpaca import AlpacaService
-from alphavi.framework import AbstractTradingBot
+from alphavi.bumblebee.external import FMPService
+from alphavi.bumblebee.external import YFinanceService
+from alphavi.bumblebee.external import AlpacaService
+from alphavi.bumblebee.template_trading_bot import TemplateTradingBot
 
 try:
     # [Singleton] (3): Initialize the services early to validate the API keys and start debug modes.
@@ -57,8 +58,8 @@ def _logfile(name: str, table, active_only: bool = True):
 
 
 def test_fmp_data_override_alpaca():
-    from alphavi.fmp import FMPService
-    from alphavi.alpaca import AlpacaService
+    from alphavi.bumblebee.external import FMPService
+    from alphavi.bumblebee.external import AlpacaService
     from alphavi.models import StockDataTable
     
     tickers_to_track = ["AAPL", "MSTR", "TSLA"]
@@ -109,7 +110,7 @@ def test_alpaca():
     """
     Test routine to execute Alpaca endpoints and verify data fetching.
     """
-    from alphavi.alpaca import AlpacaService
+    from alphavi.bumblebee.external import AlpacaService
     
     try:
         # [Singleton] (3): Initialize the AlpacaService early to validate the API keys.
@@ -198,7 +199,7 @@ def test_yfinance():
     """
     Test routine to execute YFinance endpoints and verify data fetching.
     """
-    from alphavi.yfinance import YFinanceService
+    from alphavi.bumblebee.external import YFinanceService
     
     try:
         # [Singleton] (3): Initialize the YFinanceService early to test.
@@ -256,9 +257,9 @@ def test_yfinance():
         print(f"Error in test_yfinance: {e}")
 
 def test_fmp_data_override_yfinance_override_alpaca():
-    from alphavi.fmp import FMPService
-    from alphavi.yfinance import YFinanceService
-    from alphavi.alpaca import AlpacaService
+    from alphavi.bumblebee.external import FMPService
+    from alphavi.bumblebee.external import YFinanceService
+    from alphavi.bumblebee.external import AlpacaService
     from alphavi.models import StockDataTable
     
     tickers_to_track = ["AAPL", "MSTR", "TSLA"]
@@ -289,9 +290,9 @@ def test_orders():
     """
     Test routine to execute Alpaca endpoints for creating and canceling orders.
     """
-    from alphavi.fmp import FMPService
-    from alphavi.yfinance import YFinanceService
-    from alphavi.alpaca import AlpacaService
+    from alphavi.bumblebee.external import FMPService
+    from alphavi.bumblebee.external import YFinanceService
+    from alphavi.bumblebee.external import AlpacaService
     
     try:
         yfinance = YFinanceService()
@@ -361,19 +362,49 @@ def test_orders():
 
 
 
-class Bumblebee(AbstractTradingBot):
+class Bumblebee(TemplateTradingBot):
     def _initialize(self):
         # TODO: Implement initialization logic
         pass
 
     def _stock_up_long(self):
-        # TODO: Implement long stock up logic
         # 1. get positions from alpaca
+        positions = self.alpaca.get_positions()
+        
         # 2. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
-        # 3. target is to stock up long positioned tickers (qty > 0), with uniform amount, (unit_value / 4)
-        # 4. tickers need to be considered will be loss of < - 10 * max(SD, MAD) or gain of > + 3 * max(SD, MAD)
-        # 5. when post order, in the method, right before you execute fetch, print debug string to show which tickers are being stocked up with what qty, price, value (since they are polished)
-        pass
+        for alpaca_dto in positions.get_all(active_only=True):
+            if alpaca_dto.qty <= 0:
+                continue
+
+            yf_dto = self.yfinance.get_stock_data(alpaca_dto.symbol)
+            dto = yf_dto.override(alpaca_dto)
+            
+            # 4. tickers need to be considered will be loss of < - 10 * max(SD, MAD) or gain of > + 3 * max(SD, MAD)
+            threshold = max(dto.pct_sd, dto.pct_mad)
+            if not (dto.pct_net_pnl < -10 * threshold or dto.pct_net_pnl > 3 * threshold):
+                continue
+                
+            # 3. target is to stock up long positioned tickers (qty > 0), with uniform amount, (unit_value / 4)
+            target_value = self.unit_value / 4
+            available_prices = [p for p in (dto.rt_price, dto.price) if p > 0]
+            if not available_prices:
+                continue
+            
+            cheapest_price = min(available_prices)
+            buy_price = cheapest_price * (1 - (threshold / 100.0))
+            raw_qty = target_value / buy_price
+            
+            os.makedirs("log", exist_ok=True)
+            with open(f"log/stock_up_long_{dto.symbol}.json", "w", encoding="utf-8") as f:
+                f.write(repr(dto))
+            
+            
+            self.alpaca.post_order(dto, 
+                side="buy", 
+                qty=raw_qty, 
+                limit_price=buy_price, 
+                current_orders=self.orders_table
+            )
 
     def _rebalance_long(self):
         # TODO: Implement long rebalance logic
