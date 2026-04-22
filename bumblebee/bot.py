@@ -6,26 +6,35 @@ strategy, deferring specific implementation steps to subclasses.
 """
 
 from typing import List, Optional
-from alphavi.bumblebee.external import AlpacaService
-from alphavi.bumblebee.external import YFinanceService
+from bumblebee.external import AlpacaService
+from bumblebee.external import YFinanceService
 from alphavi.models import AccountDTO, ActiveOrderTable
 
-class TemplateTradingBot:
+class Bumblebee:
     """
     Base class for trading strategy execution.
     """
     
-    def __init__(self, alpaca_service: Optional[AlpacaService] = None, yfinance_service: Optional[YFinanceService] = None):
+    def __init__(self, name: str = "Bumblebee", **kwargs):
         """
         Initializes the framework with required API services and fetches initial state.
+        Allows overriding methods by passing them as kwargs (e.g., _stock_up_long=my_custom_func).
         
         Args:
-            alpaca_service (Optional[AlpacaService]): The instantiated Alpaca API service. If None, retrieves the Singleton instance.
-            yfinance_service (Optional[YFinanceService]): The instantiated Yahoo Finance API service. If None, retrieves the Singleton instance.
+            name (str): The name of the bot instance.
+            **kwargs: Functions to override the default template methods.
         """
+        self.name = name
+        
+        # [Strategy] Allow dynamic method overriding via kwargs
+        for key, value in kwargs.items():
+            if callable(value) and hasattr(self, key):
+                # Bind the function to this instance
+                setattr(self, key, value.__get__(self, self.__class__))
+                
         # [Singleton] (3): Invoke instance method to retrieve the single instance if not provided explicitly.
-        self.alpaca = alpaca_service or AlpacaService()
-        self.yfinance = yfinance_service or YFinanceService()
+        self.alpaca = AlpacaService()
+        self.yfinance = YFinanceService()
 
         self.account_dto: AccountDTO = self.alpaca.get_account_info()
         self.orders_table: ActiveOrderTable = self.alpaca.get_orders()

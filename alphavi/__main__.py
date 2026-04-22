@@ -13,8 +13,8 @@ import math
 from alphavi import load_market_data
 from alphavi.bumblebee.external import FMPService
 from alphavi.bumblebee.external import YFinanceService
-from alphavi.bumblebee.external import AlpacaService
-from alphavi.bumblebee.template_trading_bot import TemplateTradingBot
+from bumblebee.external import AlpacaService
+from alphavi.bumblebee.bot import Bumblebee
 
 try:
     # [Singleton] (3): Initialize the services early to validate the API keys and start debug modes.
@@ -59,7 +59,7 @@ def _logfile(name: str, table, active_only: bool = True):
 
 def test_fmp_data_override_alpaca():
     from alphavi.bumblebee.external import FMPService
-    from alphavi.bumblebee.external import AlpacaService
+    from bumblebee.external import AlpacaService
     from alphavi.models import StockDataTable
     
     tickers_to_track = ["AAPL", "MSTR", "TSLA"]
@@ -110,7 +110,7 @@ def test_alpaca():
     """
     Test routine to execute Alpaca endpoints and verify data fetching.
     """
-    from alphavi.bumblebee.external import AlpacaService
+    from bumblebee.external import AlpacaService
     
     try:
         # [Singleton] (3): Initialize the AlpacaService early to validate the API keys.
@@ -259,7 +259,7 @@ def test_yfinance():
 def test_fmp_data_override_yfinance_override_alpaca():
     from alphavi.bumblebee.external import FMPService
     from alphavi.bumblebee.external import YFinanceService
-    from alphavi.bumblebee.external import AlpacaService
+    from bumblebee.external import AlpacaService
     from alphavi.models import StockDataTable
     
     tickers_to_track = ["AAPL", "MSTR", "TSLA"]
@@ -292,7 +292,7 @@ def test_orders():
     """
     from alphavi.bumblebee.external import FMPService
     from alphavi.bumblebee.external import YFinanceService
-    from alphavi.bumblebee.external import AlpacaService
+    from bumblebee.external import AlpacaService
     
     try:
         yfinance = YFinanceService()
@@ -362,70 +362,44 @@ def test_orders():
 
 
 
-class Bumblebee(TemplateTradingBot):
-    def _initialize(self):
-        # TODO: Implement initialization logic
-        pass
+def _custom_stock_up_long(self):
+    # 1. get positions from alpaca
+    positions = self.alpaca.get_positions()
+    
+    # 2. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
+    for alpaca_dto in positions.get_all(active_only=True):
+        if alpaca_dto.qty <= 0:
+            continue
 
-    def _stock_up_long(self):
-        # 1. get positions from alpaca
-        positions = self.alpaca.get_positions()
+        yf_dto = self.yfinance.get_stock_data(alpaca_dto.symbol)
+        dto = yf_dto.override(alpaca_dto)
         
-        # 2. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
-        for alpaca_dto in positions.get_all(active_only=True):
-            if alpaca_dto.qty <= 0:
-                continue
-
-            yf_dto = self.yfinance.get_stock_data(alpaca_dto.symbol)
-            dto = yf_dto.override(alpaca_dto)
+        # 4. tickers need to be considered will be loss of < - 10 * max(SD, MAD) or gain of > + 3 * max(SD, MAD)
+        threshold = max(dto.pct_sd, dto.pct_mad)
+        if not (dto.pct_net_pnl < -10 * threshold or dto.pct_net_pnl > 3 * threshold):
+            continue
             
-            # 4. tickers need to be considered will be loss of < - 10 * max(SD, MAD) or gain of > + 3 * max(SD, MAD)
-            threshold = max(dto.pct_sd, dto.pct_mad)
-            if not (dto.pct_net_pnl < -10 * threshold or dto.pct_net_pnl > 3 * threshold):
-                continue
-                
-            # 3. target is to stock up long positioned tickers (qty > 0), with uniform amount, (unit_value / 4)
-            target_value = self.unit_value / 4
-            available_prices = [p for p in (dto.rt_price, dto.price) if p > 0]
-            if not available_prices:
-                continue
-            
-            cheapest_price = min(available_prices)
-            buy_price = cheapest_price * (1 - (threshold / 100.0))
-            raw_qty = target_value / buy_price
-            
-            os.makedirs("log", exist_ok=True)
-            with open(f"log/stock_up_long_{dto.symbol}.json", "w", encoding="utf-8") as f:
-                f.write(repr(dto))
-            
-            
-            self.alpaca.post_order(dto, 
-                side="buy", 
-                qty=raw_qty, 
-                limit_price=buy_price, 
-                current_orders=self.orders_table
-            )
-
-    def _rebalance_long(self):
-        # TODO: Implement long rebalance logic
-        pass
-
-    def _liquidate_long(self):
-        # TODO: Implement long liquidation logic
-        pass
-
-    def _stock_up_short(self):
-        # TODO: Implement short stock up logic
-        pass
-
-    def _rebalance_short(self):
-        # TODO: Implement short rebalance logic
-        pass
-
-    def _close_short(self):
-        # TODO: Implement short close logic
-        pass
-
+        # 3. target is to stock up long positioned tickers (qty > 0), with uniform amount, (unit_value / 4)
+        target_value = self.unit_value / 4
+        available_prices = [p for p in (dto.rt_price, dto.price) if p > 0]
+        if not available_prices:
+            continue
+        
+        cheapest_price = min(available_prices)
+        buy_price = cheapest_price * (1 - (threshold / 100.0))
+        raw_qty = target_value / buy_price
+        
+        os.makedirs("log", exist_ok=True)
+        with open(f"log/stock_up_long_{dto.symbol}.json", "w", encoding="utf-8") as f:
+            f.write(repr(dto))
+        
+        
+        self.alpaca.post_order(dto, 
+            side="buy", 
+            qty=raw_qty, 
+            limit_price=buy_price, 
+            current_orders=self.orders_table
+        )
 
 def main():
     # test_fmp()
@@ -435,8 +409,10 @@ def main():
     # test_fmp_data_override_yfinance_override_alpaca()
     # test_orders()
 
-    print("\n--- Starting Trading Bot ---")
-    bot = Bumblebee()
+    print(f"\n--- Starting Trading Bot: {__name__} ---")
+    
+    # Instantiate Bumblebee and inject the custom behavior via kwargs (Strategy Pattern)
+    bot = Bumblebee(name=__name__, _stock_up_long=_custom_stock_up_long)
     bot.execute()
 
 if __name__ == "__main__":
