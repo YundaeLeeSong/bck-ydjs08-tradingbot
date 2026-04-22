@@ -562,7 +562,7 @@ class AlpacaService:
         }
         
         response = self.fetch_endpoint("orders", method="POST", data=payload)
-        if response is not None:
+        if response is not None and self.debug:
             print(f"  [OK] Limit {side} order placed: [{dto.symbol}] {polished_qty} @ ${polished_price} = ${polished_qty * polished_price:.2f}")
         return response
 
