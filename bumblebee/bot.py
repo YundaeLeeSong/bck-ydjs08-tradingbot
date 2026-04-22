@@ -8,7 +8,7 @@ strategy, deferring specific implementation steps to subclasses.
 from typing import List, Optional
 from bumblebee.external import AlpacaService
 from bumblebee.external import YFinanceService
-from alphavi.models import AccountDTO, ActiveOrderTable
+from bumblebee.models import AccountDTO, ActiveOrderTable
 
 class Bumblebee:
     """

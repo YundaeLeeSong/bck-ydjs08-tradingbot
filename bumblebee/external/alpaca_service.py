@@ -13,7 +13,7 @@ import requests
 from typing import Optional, Any, List
 from alphavi_util.core import get_env_var
 
-from alphavi.models import StockDataDTO, StockDataTable, ActiveOrderDTO, ActiveOrderTable, AccountDTO
+from bumblebee.models import StockDataDTO, StockDataTable, ActiveOrderDTO, ActiveOrderTable, AccountDTO
 from alphavi_util.est_timer import ESTTimer
 
 _DEBUG_LOG_ = "log_alpaca"

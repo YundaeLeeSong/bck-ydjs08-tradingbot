@@ -10,7 +10,7 @@ import json
 import requests
 from typing import Optional, Any
 from alphavi_util.core import get_env_var
-from alphavi.models import StockDataDTO
+from bumblebee.models import StockDataDTO
 
 _DEBUG_LOG_ = "log_fmp"
 

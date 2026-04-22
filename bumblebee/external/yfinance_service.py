@@ -14,7 +14,7 @@ import yfinance as yf
 from datetime import datetime
 import matplotlib.pyplot as plt
 from typing import List, Optional
-from alphavi.models import StockDataDTO, StockDataTable
+from bumblebee.models import StockDataDTO, StockDataTable
 from bumblebee.external.matplotlib_service import generate_all_plots
 from bumblebee.external.analysis_service import analyze_stock_data
 
