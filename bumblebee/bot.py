@@ -18,7 +18,7 @@ class Bumblebee:
     def __init__(self, name: str = "Bumblebee", **kwargs):
         """
         Initializes the framework with required API services and fetches initial state.
-        Allows overriding methods by passing them as kwargs (e.g., _stock_up_long=my_custom_func).
+        Allows overriding methods by passing them as kwargs (e.g., stock_up_long=my_custom_func).
         
         Args:
             name (str): The name of the bot instance.
@@ -108,20 +108,20 @@ class Bumblebee:
         Executes the overall trading algorithmic sequence.
         """
         # [TemplateMethod] (1): Define the skeleton of the algorithm, invoking deferred logic.
-        self._initialize()
-        self._stock_up_long()
-        self._rebalance_long()
-        self._liquidate_long()
-        self._stock_up_short()
-        self._rebalance_short()
-        self._close_short()
+        self.initialize()
+        self.stock_up_long()
+        self.rebalance_long()
+        self.liquidate_long()
+        self.stock_up_short()
+        self.rebalance_short()
+        self.close_short()
 
     # [TemplateMethod] (2): Primitive operations to be implemented by concrete subclasses.
-    def _initialize(self) -> None:
+    def initialize(self) -> None:
         """Executes initialization steps for the trading strategy."""
         pass
 
-    def _stock_up_long(self) -> None:
+    def stock_up_long(self) -> None:
         """Executes logic for stocking up long positions."""
         # 1. get positions from alpaca
         positions = AlpacaService().get_positions()
@@ -153,22 +153,22 @@ class Bumblebee:
                 limit_price=buy_price
             )
 
-    def _rebalance_long(self) -> None:
+    def rebalance_long(self) -> None:
         """Executes logic for rebalancing long positions."""
         pass
 
-    def _liquidate_long(self) -> None:
+    def liquidate_long(self) -> None:
         """Executes logic for liquidating long positions."""
         pass
 
-    def _stock_up_short(self) -> None:
+    def stock_up_short(self) -> None:
         """Executes logic for stocking up short positions."""
         pass
 
-    def _rebalance_short(self) -> None:
+    def rebalance_short(self) -> None:
         """Executes logic for rebalancing short positions."""
         pass
 
-    def _close_short(self) -> None:
+    def close_short(self) -> None:
         """Executes logic for closing short positions."""
         pass
