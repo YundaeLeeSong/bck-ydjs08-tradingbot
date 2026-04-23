@@ -109,20 +109,59 @@ class Bumblebee:
         """
         # [TemplateMethod] (1): Define the skeleton of the algorithm, invoking deferred logic.
         self.initialize()
-        self.stock_up_long()
-        self.rebalance_long()
-        self.liquidate_long()
-        self.stock_up_short()
-        self.rebalance_short()
-        self.close_short()
+        
+        self.rebalance("long", "soft")
+        self.rebalance("long", "hard")
+        self.liquidate("long")
+        
+        self.rebalance("short", "soft")
+        self.rebalance("short", "hard")
+        self.close("short")
 
-    # [TemplateMethod] (2): Primitive operations to be implemented by concrete subclasses.
+    # --- Public API for external orchestration ---
+    
     def initialize(self) -> None:
         """Executes initialization steps for the trading strategy."""
         pass
 
-    def stock_up_long(self) -> None:
-        """Executes logic for stocking up long positions."""
+    def rebalance(self, side: str, mode: str) -> None:
+        if side == "long":
+            if mode == "soft":
+                self._soft_rebalance_long()
+            elif mode == "hard":
+                self._hard_rebalance_long()
+            else:
+                raise ValueError("mode must be 'soft' or 'hard'")
+        elif side == "short":
+            if mode == "soft":
+                self._soft_rebalance_short()
+            elif mode == "hard":
+                self._hard_rebalance_short()
+            else:
+                raise ValueError("mode must be 'soft' or 'hard'")
+        else:
+            raise ValueError("side must be 'long' or 'short'")
+
+    def liquidate(self, side: str) -> None:
+        if side == "long":
+            self._liquidate_long()
+        elif side == "short":
+            self._liquidate_short()
+        else:
+            raise ValueError("side must be 'long' or 'short'")
+
+    def close(self, side: str) -> None:
+        if side == "long":
+            self._close_long()
+        elif side == "short":
+            self._close_short()
+        else:
+            raise ValueError("side must be 'long' or 'short'")
+
+    # [TemplateMethod] (2): Primitive operations to be implemented by concrete subclasses.
+    
+    def _soft_rebalance_long(self) -> None:
+        """Executes logic for stocking up long positions (soft rebalance)."""
         # 1. get positions from alpaca
         positions = AlpacaService().get_positions()
         
@@ -153,22 +192,30 @@ class Bumblebee:
                 limit_price=buy_price
             )
 
-    def rebalance_long(self) -> None:
-        """Executes logic for rebalancing long positions."""
+    def _hard_rebalance_long(self) -> None:
+        """Executes logic for hard rebalancing long positions."""
         pass
 
-    def liquidate_long(self) -> None:
+    def _liquidate_long(self) -> None:
         """Executes logic for liquidating long positions."""
         pass
 
-    def stock_up_short(self) -> None:
-        """Executes logic for stocking up short positions."""
+    def _soft_rebalance_short(self) -> None:
+        """Executes logic for stocking up short positions (soft rebalance)."""
         pass
 
-    def rebalance_short(self) -> None:
-        """Executes logic for rebalancing short positions."""
+    def _hard_rebalance_short(self) -> None:
+        """Executes logic for hard rebalancing short positions."""
         pass
 
-    def close_short(self) -> None:
+    def _liquidate_short(self) -> None:
+        """Executes logic for liquidating short positions."""
+        pass
+
+    def _close_long(self) -> None:
+        """Executes logic for closing long positions."""
+        pass
+
+    def _close_short(self) -> None:
         """Executes logic for closing short positions."""
         pass
