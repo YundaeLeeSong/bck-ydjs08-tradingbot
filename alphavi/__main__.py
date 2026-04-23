@@ -362,57 +362,18 @@ def test_orders():
 
 
 
-def _custom_stock_up_long(self):
-    # 1. get positions from alpaca
-    positions = self.alpaca.get_positions()
-    
-    # 2. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
-    for alpaca_dto in positions.get_all(active_only=True):
-        if alpaca_dto.qty <= 0:
-            continue
-
-        yf_dto = self.yfinance.get_stock_data(alpaca_dto.symbol)
-        dto = yf_dto.override(alpaca_dto)
-        
-        # 4. tickers need to be considered will be loss of < - 10 * max(SD, MAD) or gain of > + 3 * max(SD, MAD)
-        threshold = max(dto.pct_sd, dto.pct_mad)
-        if -10 * threshold < dto.pct_net_pnl < 3 * threshold: continue 
-            
-        # constant notional value, consistent buying
-        notional_value = self.unit_value / 4
-
-        available_prices = [p for p in (dto.rt_price, dto.price) if p > 0]
-        if not available_prices:
-            continue
-        
-        cheapest_price = min(available_prices)
-        buy_price = cheapest_price * (1 - (threshold / 100.0))
-        raw_qty = notional_value / buy_price
-        
-        os.makedirs("log", exist_ok=True)
-        with open(f"log/stock_up_long_{dto.symbol}.json", "w", encoding="utf-8") as f:
-            f.write(repr(dto))
-        
-        
-        self.alpaca.post_order(dto, 
-            side="buy", 
-            qty=raw_qty, 
-            limit_price=buy_price, 
-            current_orders=self.orders_table
-        )
-
 def main():
     # test_fmp()
     # test_alpaca()
     # test_fmp_data_override_alpaca()
-    # test_yfinance()
+    test_yfinance()
     # test_fmp_data_override_yfinance_override_alpaca()
     # test_orders()
 
     print(f"\n--- Starting Trading Bot: {__name__} ---")
     
-    # Instantiate Bumblebee and inject the custom behavior via kwargs (Strategy Pattern)
-    bot = Bumblebee(name=__name__, _stock_up_long=_custom_stock_up_long)
+    # Instantiate Bumblebee
+    bot = Bumblebee(name=__name__)
     bot.execute()
 
 if __name__ == "__main__":

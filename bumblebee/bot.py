@@ -115,7 +115,36 @@ class Bumblebee:
 
     def _stock_up_long(self) -> None:
         """Executes logic for stocking up long positions."""
-        pass
+        # 1. get positions from alpaca
+        positions = self.alpaca.get_positions()
+        
+        # 2. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
+        for alpaca_dto in positions.get_all(active_only=True):
+            # qty validate
+            if alpaca_dto.qty <= 0: continue
+            dto = self.yfinance.get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
+            # price validate
+            available_prices = [p for p in (dto.rt_price, dto.price) if p > 0]
+            if not available_prices: continue # no price data
+            floor_price = min(available_prices)
+            ceil_price = max(available_prices)
+            if 4 * self.unit_value < floor_price: continue # overpriced relative to account
+            ######
+            ###### LOGIC
+            ######
+            pct_amp = max(dto.pct_sd, dto.pct_mad)
+            if -10 * pct_amp < dto.pct_net_pnl < 3 * pct_amp: continue # only big lost & gained tickers
+            # calculation, constant notional value, consistent buying
+            notional_value = self.unit_value / 4
+            buy_price = floor_price * (1 - (pct_amp / 100.0))
+            raw_qty = notional_value / buy_price
+            # order
+            self.alpaca.post_order(dto, 
+                side="buy", 
+                qty=raw_qty, 
+                limit_price=buy_price, 
+                current_orders=self.orders_table
+            )
 
     def _rebalance_long(self) -> None:
         """Executes logic for rebalancing long positions."""
