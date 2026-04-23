@@ -8,7 +8,7 @@ strategy, deferring specific implementation steps to subclasses.
 from typing import List, Optional
 from bumblebee.external import AlpacaService
 from bumblebee.external import YFinanceService
-from bumblebee.models import AccountDTO, ActiveOrderTable
+from bumblebee.models import AccountDTO, ActiveOrderTable, StockDataTable
 
 class Bumblebee:
     """
@@ -34,6 +34,7 @@ class Bumblebee:
                 
         self.account_dto: AccountDTO = AlpacaService().get_account_info()
         self.orders_table: ActiveOrderTable = AlpacaService().get_orders()
+        self.positions: StockDataTable = AlpacaService().get_positions()
 
         self.unit_value: float = AlpacaService().get_unit_value(self.account_dto)
         self.is_entry: bool = AlpacaService().is_entry(self.account_dto)
@@ -110,13 +111,17 @@ class Bumblebee:
         # [TemplateMethod] (1): Define the skeleton of the algorithm, invoking deferred logic.
         self.initialize()
         
-        self.rebalance("long", "soft")
-        self.rebalance("long", "hard")
-        self.liquidate("long")
-        
-        self.rebalance("short", "soft")
-        self.rebalance("short", "hard")
-        self.close("short")
+        if self.is_long:
+            self.rebalance("long", "soft")
+            self.rebalance("long", "hard")
+            self.liquidate("long")
+            self.close("long")
+            
+        if self.is_short:
+            self.rebalance("short", "soft")
+            self.rebalance("short", "hard")
+            self.liquidate("short")
+            self.close("short")
 
     # --- Public API for external orchestration ---
     
@@ -159,11 +164,8 @@ class Bumblebee:
     
     def _soft_rebalance_long(self) -> None:
         """Executes logic for stocking up long positions (soft rebalance)."""
-        # 1. get positions from alpaca
-        positions = AlpacaService().get_positions()
-        
-        # 2. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
-        for alpaca_dto in positions.get_all(active_only=True):
+        # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
+        for alpaca_dto in self.positions.get_all(active_only=True):
             # qty validate
             if alpaca_dto.qty <= 0: continue
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)

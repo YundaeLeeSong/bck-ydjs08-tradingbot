@@ -374,7 +374,7 @@ def main():
     
     # Instantiate Bumblebee
     bot = Bumblebee(name=__name__)
-    bot.execute()
+    bot.rebalance("long", "soft")
 
 if __name__ == "__main__":
     main()
