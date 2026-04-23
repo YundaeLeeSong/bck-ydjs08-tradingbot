@@ -91,6 +91,18 @@ class Bumblebee:
         print(f"[Data] Loser Tickers (Long):    {self.loser_tickers_to_long}")
         print("="*60 + "\n")
 
+    def _post_order(self, dto, side: str, qty: float, limit_price: float = 0.0) -> None:
+        """
+        Internal method to handle posting orders using the session's active orders.
+        """
+        AlpacaService().post_order(
+            dto,
+            side=side,
+            qty=qty,
+            limit_price=limit_price,
+            current_orders=self.orders_table
+        )
+
     def execute(self) -> None:
         """
         Executes the overall trading algorithmic sequence.
@@ -135,11 +147,10 @@ class Bumblebee:
             buy_price = floor_price * (1 - (pct_amp / 100.0))
             raw_qty = notional_value / buy_price
             # order
-            AlpacaService().post_order(dto, 
+            self._post_order(dto, 
                 side="buy", 
                 qty=raw_qty, 
-                limit_price=buy_price, 
-                current_orders=self.orders_table
+                limit_price=buy_price
             )
 
     def _rebalance_long(self) -> None:
