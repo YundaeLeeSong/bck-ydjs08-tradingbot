@@ -125,22 +125,19 @@ class Bumblebee:
         pass
 
     def rebalance(self, side: str, mode: str) -> None:
-        if side == "long":
-            if mode == "soft":
-                self._soft_rebalance_long()
-            elif mode == "hard":
-                self._hard_rebalance_long()
-            else:
-                raise ValueError("mode must be 'soft' or 'hard'")
-        elif side == "short":
-            if mode == "soft":
-                self._soft_rebalance_short()
-            elif mode == "hard":
-                self._hard_rebalance_short()
-            else:
-                raise ValueError("mode must be 'soft' or 'hard'")
-        else:
+        if side not in ("long", "short"):
             raise ValueError("side must be 'long' or 'short'")
+        if mode not in ("soft", "hard"):
+            raise ValueError("mode must be 'soft' or 'hard'")
+
+        if side == "long" and mode == "soft":
+            self._soft_rebalance_long()
+        elif side == "long" and mode == "hard":
+            self._hard_rebalance_long()
+        elif side == "short" and mode == "soft":
+            self._soft_rebalance_short()
+        elif side == "short" and mode == "hard":
+            self._hard_rebalance_short()
 
     def liquidate(self, side: str) -> None:
         if side == "long":
