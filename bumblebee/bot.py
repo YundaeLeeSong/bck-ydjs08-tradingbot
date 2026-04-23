@@ -32,42 +32,38 @@ class Bumblebee:
                 # Bind the function to this instance
                 setattr(self, key, value.__get__(self, self.__class__))
                 
-        # [Singleton] (3): Invoke instance method to retrieve the single instance if not provided explicitly.
-        self.alpaca = AlpacaService()
-        self.yfinance = YFinanceService()
+        self.account_dto: AccountDTO = AlpacaService().get_account_info()
+        self.orders_table: ActiveOrderTable = AlpacaService().get_orders()
 
-        self.account_dto: AccountDTO = self.alpaca.get_account_info()
-        self.orders_table: ActiveOrderTable = self.alpaca.get_orders()
-
-        self.unit_value: float = self.alpaca.get_unit_value(self.account_dto)
-        self.is_entry: bool = self.alpaca.is_entry(self.account_dto)
-        self.is_long: bool = self.alpaca.is_long(self.account_dto)
-        self.is_short: bool = self.alpaca.is_short(self.account_dto)
+        self.unit_value: float = AlpacaService().get_unit_value(self.account_dto)
+        self.is_entry: bool = AlpacaService().is_entry(self.account_dto)
+        self.is_long: bool = AlpacaService().is_long(self.account_dto)
+        self.is_short: bool = AlpacaService().is_short(self.account_dto)
 
         self.option_tickers: List[str] = (
-            self.alpaca.get_tickers(["YieldMax"], ["Short"]) + 
-            self.alpaca.get_tickers(["Roundhill", "WeeklyPay"])
+            AlpacaService().get_tickers(["YieldMax"], ["Short"]) + 
+            AlpacaService().get_tickers(["Roundhill", "WeeklyPay"])
         )
-        self.option_tickers_inv: List[str] = self.alpaca.get_tickers(["YieldMax", "Short"])
+        self.option_tickers_inv: List[str] = AlpacaService().get_tickers(["YieldMax", "Short"])
 
-        self.index_tickers: List[str] = self.alpaca.get_tickers(["MicroSectors"], ["Inverse", "due"])
+        self.index_tickers: List[str] = AlpacaService().get_tickers(["MicroSectors"], ["Inverse", "due"])
 
         self.index_tickers_x2: List[str] = (
-            self.alpaca.get_tickers(["Bull", "2X"]) + 
-            self.alpaca.get_tickers(["Leveraged", "2X"], ["Inverse"])
+            AlpacaService().get_tickers(["Bull", "2X"]) + 
+            AlpacaService().get_tickers(["Leveraged", "2X"], ["Inverse"])
         )
 
         self.index_tickers_x3: List[str] = (
-            self.alpaca.get_tickers(["Bull", "3X"]) + 
-            self.alpaca.get_tickers(["Leveraged", "3X"], ["Inverse"])
+            AlpacaService().get_tickers(["Bull", "3X"]) + 
+            AlpacaService().get_tickers(["Leveraged", "3X"], ["Inverse"])
         )
 
-        self.winning_tickers_to_short: List[str] = self.yfinance.get_winner_tickers(
+        self.winning_tickers_to_short: List[str] = YFinanceService().get_winner_tickers(
             max_mcap=100_000_000_000,
             min_change=15.0
         )
 
-        self.loser_tickers_to_long: List[str] = self.yfinance.get_loser_tickers(
+        self.loser_tickers_to_long: List[str] = YFinanceService().get_loser_tickers(
             min_mcap=100_000_000_000,
             max_change=-4.5
         )
@@ -116,13 +112,13 @@ class Bumblebee:
     def _stock_up_long(self) -> None:
         """Executes logic for stocking up long positions."""
         # 1. get positions from alpaca
-        positions = self.alpaca.get_positions()
+        positions = AlpacaService().get_positions()
         
         # 2. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
         for alpaca_dto in positions.get_all(active_only=True):
             # qty validate
             if alpaca_dto.qty <= 0: continue
-            dto = self.yfinance.get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
+            dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
             # price validate
             available_prices = [p for p in (dto.rt_price, dto.price) if p > 0]
             if not available_prices: continue # no price data
@@ -139,7 +135,7 @@ class Bumblebee:
             buy_price = floor_price * (1 - (pct_amp / 100.0))
             raw_qty = notional_value / buy_price
             # order
-            self.alpaca.post_order(dto, 
+            AlpacaService().post_order(dto, 
                 side="buy", 
                 qty=raw_qty, 
                 limit_price=buy_price, 
