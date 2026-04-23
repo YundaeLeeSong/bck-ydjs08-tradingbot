@@ -13,7 +13,7 @@ import math
 from bumblebee.external import FMPService
 from bumblebee.external import YFinanceService
 from bumblebee.external import AlpacaService
-from bumblebee.bot import Bumblebee
+from bumblebee import Bumblebee
 
 try:
     # [Singleton] (3): Initialize the services early to validate the API keys and start debug modes.
@@ -233,6 +233,7 @@ def test_yfinance():
 
         # STRATEGY 3: Test Assets
         index_tickers = [
+            'SMU', 'OKLL', 'SMZ', 'OKLS', # energy
             'COIN', 'CONY', 'CONL', # coinbase
             'MSTR', 'MSTY', 'MSTU', 'STRC', 'STRK', 'STRD', 'STRF', # stragegy
             'GDXU', 'SLV','COPX','LIT', # minings
@@ -370,10 +371,15 @@ def main():
     # test_fmp_data_override_yfinance_override_alpaca()
     # test_orders()
 
-    print(f"\n--- Starting Trading Bot: {__name__} ---")
+
+
+
+
+
+    
     
     # Instantiate Bumblebee
-    bot = Bumblebee(name=__name__)
+    bot = Bumblebee(__name__)
     bot.rebalance("long", "soft")
 
 if __name__ == "__main__":

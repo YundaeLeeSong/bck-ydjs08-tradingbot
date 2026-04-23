@@ -25,6 +25,7 @@ class Bumblebee:
             **kwargs: Functions to override the default template methods.
         """
         self.name = name
+        print(f"\n--- Starting Trading Bot @ {name} ---")
         
         # [Strategy] Allow dynamic method overriding via kwargs
         for key, value in kwargs.items():
