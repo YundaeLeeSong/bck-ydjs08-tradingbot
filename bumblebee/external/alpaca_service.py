@@ -57,7 +57,7 @@ class AlpacaService:
         # [Singleton] (2): Initialize configuration once, ignore subsequent __init__ calls.
         if self._initialized:
             account = self.get_account_info()
-            print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value(account):.2f} for rebalance, long: {self.is_long(account)}, short: {self.is_short(account)}')
+            # print(f'[DEBUG] hi, your purchasing power is now, ${self.get_unit_value(account):.2f} for rebalance, long: {self.is_long(account)}, short: {self.is_short(account)}')
             return
 
         self.base_url = base_url or get_env_var("APCA_API_BASE_URL")
@@ -270,7 +270,7 @@ class AlpacaService:
             ActiveOrderTable: A table containing all ActiveOrderDTO objects.
         """
         table = ActiveOrderTable()
-        data = self.fetch_endpoint("orders", {"status": "accepted"})
+        data = self.fetch_endpoint("orders", {"status": "open", "limit": 500})
         if not data or not isinstance(data, list):
             return table
             
@@ -504,7 +504,7 @@ class AlpacaService:
         open_orders = self.get_orders()
         orders_list = open_orders.get_all()
         if not orders_list:
-            print("  [INFO] No active orders to delete.")
+            print("  [INFO] No opened orders to delete.")
             return
 
         for order in orders_list:

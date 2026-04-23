@@ -367,7 +367,7 @@ def main():
     # test_fmp()
     # test_alpaca()
     # test_fmp_data_override_alpaca()
-    test_yfinance()
+    # test_yfinance()
     # test_fmp_data_override_yfinance_override_alpaca()
     # test_orders()
 
@@ -375,12 +375,13 @@ def main():
 
 
 
+    # Instantiate Bumblebee
+    bot = Bumblebee(__name__)
+    bot.rebalance("long", "soft")
 
     
+    _logfile("order_check",AlpacaService().get_orders())
     
-    # # Instantiate Bumblebee
-    # bot = Bumblebee(__name__)
-    # bot.rebalance("long", "soft")
 
 if __name__ == "__main__":
     main()

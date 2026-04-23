@@ -83,7 +83,7 @@ class Bumblebee:
         print(f"[Account] Is Entry:          {self.is_entry}")
         print(f"[Account] Is Long:           {self.is_long}")
         print(f"[Account] Is Short:          {self.is_short}")
-        print(f"[Account] Active Orders:     {len(self.orders_table.get_all())}")
+        print(f"[Account] Open Orders:     {len(self.orders_table.get_all())}")
         print(f"[Data] Option Tickers:       {self.option_tickers}")
         print(f"[Data] Option Tickers Inv:   {self.option_tickers_inv}")
         print(f"[Data] Index Tickers:        {self.index_tickers}")
@@ -95,7 +95,7 @@ class Bumblebee:
 
     def _post_order(self, dto, side: str, qty: float, limit_price: float = 0.0) -> None:
         """
-        Internal method to handle posting orders using the session's active orders.
+        Internal method to handle posting orders using the session's open orders.
         """
         AlpacaService().post_order(
             dto,
@@ -176,14 +176,14 @@ class Bumblebee:
             floor_price = min(available_prices)
             ceil_price = max(available_prices)
             if 4 * self.unit_value < floor_price: continue # overpriced relative to account
-            ######
+            ##################################################################
             ###### LOGIC
-            ######
+            ##################################################################
             pct_amp = max(dto.pct_sd, dto.pct_mad)
-            if -10 * pct_amp < dto.pct_net_pnl < 3 * pct_amp: continue # only big lost & gained tickers
+            if -10 * pct_amp < dto.pct_net_pnl < 4 * pct_amp: continue # only big lost & gained tickers
             # calculation, constant notional value, consistent buying
             notional_value = self.unit_value / 4
-            buy_price = floor_price * (1 - (pct_amp / 100.0))
+            buy_price = floor_price * (1 - (1.5 * pct_amp / 100.0))
             raw_qty = notional_value / buy_price
             # order
             self._post_order(dto, 
