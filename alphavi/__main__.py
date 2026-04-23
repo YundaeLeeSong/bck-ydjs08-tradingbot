@@ -378,9 +378,9 @@ def main():
 
     
     
-    # Instantiate Bumblebee
-    bot = Bumblebee(__name__)
-    bot.rebalance("long", "soft")
+    # # Instantiate Bumblebee
+    # bot = Bumblebee(__name__)
+    # bot.rebalance("long", "soft")
 
 if __name__ == "__main__":
     main()
