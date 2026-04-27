@@ -199,7 +199,10 @@ class StockDataTable:
         for symbol, dto in self._data.items():
             if symbol not in other._data:
                 raise KeyError(f"Key '{symbol}' found in self but not in other table.")
-            result.add(dto.override(other._data[symbol]))
+            
+        for symbol, dto in other._data.items():
+            if symbol in self._data.keys(): result.add(dto.override(self._data[symbol]))
+            else: result.add(dto)
         return result
 
     def __repr__(self) -> str:

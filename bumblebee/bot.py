@@ -112,9 +112,10 @@ class Bumblebee:
 
         yfinance_table = YFinanceService().get_stocks_table(self.loser_tickers_to_long + self.position_tickers)
         self.active_long_positions: StockDataTable = yfinance_table.override(self._positions)
-        # _logfile("positions", self._positions, active_only=False)
-        # _logfile("long positions (actives)", self.active_long_positions, active_only=False)
-        # _logfile("long positions (actives)", self.active_long_positions)
+        _logfile("positions", self._positions, active_only=False)
+        _logfile("positions (actives)", self._positions)
+        _logfile("long positions", self.active_long_positions, active_only=False)
+        _logfile("long positions (actives)", self.active_long_positions)
 
         
 
@@ -128,17 +129,17 @@ class Bumblebee:
         print("\n" + "="*60)
         print(" TRADING FRAMEWORK INITIALIZATION REPORT")
         print("="*60)
-        print(f"[Account] Unit Value:        ${self.unit_value:.2f}")
-        print(f"[Account] Is Entry:          {self.is_entry}")
-        print(f"[Account] Is Long:           {self.is_long}")
-        print(f"[Account] Is Short:          {self.is_short}")
-        print(f"[Account] Open Orders:     {len(self.orders_table.get_all())}")
-        print(f"[Data] Position Tickers Amount:     {len(self.active_long_positions.get_tickers())}")
-        print(f"[Data] Option Tickers:       {self.option_tickers}")
-        print(f"[Data] Option Tickers Inv:   {self.option_tickers_inv}")
-        print(f"[Data] Index Tickers:        {self.index_tickers}")
-        print(f"[Data] Index Tickers x2:     {self.index_tickers_x2}")
-        print(f"[Data] Index Tickers x3:     {self.index_tickers_x3}")
+        print(f"[Account] Unit Value:           ${self.unit_value:.2f}")
+        print(f"[Account] Is Entry:             {self.is_entry}")
+        print(f"[Account] Is Long:              {self.is_long}")
+        print(f"[Account] Is Short:             {self.is_short}")
+        print(f"[Account] Open Orders:          {len(self.orders_table.get_all())}")
+        print(f"[Data] Position Tickers Amount: {len(self.active_long_positions.get_tickers())}")
+        print(f"[Data] Option Tickers:          {self.option_tickers}")
+        print(f"[Data] Option Tickers Inv:      {self.option_tickers_inv}")
+        print(f"[Data] Index Tickers:           {self.index_tickers}")
+        print(f"[Data] Index Tickers x2:        {self.index_tickers_x2}")
+        print(f"[Data] Index Tickers x3:        {self.index_tickers_x3}")
         print(f"[Data] Winning Tickers (Short): {self.winning_tickers_to_short}")
         print(f"[Data] Loser Tickers (Long):    {self.loser_tickers_to_long}")
         print("="*60 + "\n")
@@ -218,6 +219,8 @@ class Bumblebee:
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
         for alpaca_dto in self.active_long_positions.get_all():
             # print(alpaca_dto)
+            # % profit validate
+            pct_amp = max(dto.pct_sd, dto.pct_mad)
             # qty validate
             if alpaca_dto.qty < 0: continue # short position
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
@@ -230,7 +233,6 @@ class Bumblebee:
             ##################################################################
             ###### LOGIC
             ##################################################################
-            pct_amp = max(dto.pct_sd, dto.pct_mad)
             if (dto.pct_net_pnl < -10 * pct_amp or 4 * pct_amp < dto.pct_net_pnl): # big lost/gained tickers
                 notional_value = self.unit_value / 4
                 buy_price = floor_price * (1 - (1.5 * pct_amp / 100.0))
@@ -270,12 +272,37 @@ class Bumblebee:
 
     def _close_long(self) -> None:
         """Executes logic for closing long positions."""
-        pass
+        # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
+        for alpaca_dto in self._positions.get_all(active_only=True):
+            # % profit validate
+            pct_amp = max(dto.pct_sd, dto.pct_mad)
+            if (dto.pct_net_pnl < 2 * pct_amp): continue
+            # qty validate
+            if alpaca_dto.qty <= 0.01: continue
+            dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
+            # price validate
+            available_prices = [p for p in (dto.rt_price, dto.price, dto.entry_price) if p > 0]
+            if not available_prices: continue # no price data
+            floor_price = min(available_prices)
+            ceil_price = max(available_prices)
+            ##################################################################
+            ###### LOGIC
+            ##################################################################
+            buy_price = ceil_price * (1 + (0.1 * pct_amp / 100.0))
+            raw_qty = abs(dto.qty) - 0.01
+            # order
+            self._post_order(dto, 
+                side="sell", 
+                qty=raw_qty, 
+                limit_price=buy_price
+            )
 
     def _close_short(self) -> None:
         """Executes logic for closing short positions."""
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
         for alpaca_dto in self._positions.get_all(active_only=True):
+            # % profit validate
+            pct_amp = max(dto.pct_sd, dto.pct_mad)
             # qty validate
             if alpaca_dto.qty > 0: continue
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
@@ -287,7 +314,6 @@ class Bumblebee:
             ##################################################################
             ###### LOGIC
             ##################################################################
-            pct_amp = max(dto.pct_sd, dto.pct_mad)
             buy_price = floor_price * (1 - (0.1 * pct_amp / 100.0))
             raw_qty = abs(dto.qty)
             # order

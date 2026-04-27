@@ -377,7 +377,8 @@ def main():
 
     # Instantiate Bumblebee
     bot = Bumblebee(__name__)
-    bot.rebalance("long", "soft")
+    # bot.rebalance("long", "soft")
+    bot.close("long")
     # bot.close("short")
 
     
