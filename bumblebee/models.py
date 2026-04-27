@@ -211,6 +211,12 @@ class StockDataTable:
         """
         return json.dumps({k: asdict(v) for k, v in self._data.items()}, indent=2)
 
+    def __iter__(self):
+        """
+        Returns an iterator over the StockDataDTO objects in the table.
+        """
+        return iter(self._data.values())
+
 @dataclass
 class ActiveOrderDTO:
     """
