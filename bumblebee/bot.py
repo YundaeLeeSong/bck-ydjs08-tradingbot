@@ -10,6 +10,35 @@ from bumblebee.external import AlpacaService
 from bumblebee.external import YFinanceService
 from bumblebee.models import AccountDTO, ActiveOrderTable, StockDataTable
 
+import os
+def _logfile(name: str, table, active_only: bool = True):
+    os.makedirs("log", exist_ok=True)
+    log_file = os.path.join("log", f"{name.lower().replace(' ', '_')}.json")
+    
+    if hasattr(table, 'get_all'):
+        import json
+        from dataclasses import asdict
+        try:
+            dtos = table.get_all(active_only=active_only)
+        except TypeError:
+            dtos = table.get_all()
+            
+        filtered_data = {}
+        for dto in dtos:
+            key = getattr(dto, 'symbol', getattr(dto, 'id', None))
+            if key is not None:
+                filtered_data[key] = asdict(dto)
+        content = json.dumps(filtered_data, indent=2)
+    else:
+        content = repr(table)
+        
+    with open(log_file, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
+
+
+
 class Bumblebee:
     """
     Base class for trading strategy execution.
@@ -71,6 +100,18 @@ class Bumblebee:
             min_mcap=100_000_000_000,
             max_change=-4.5
         )
+
+        yfinance_table = StockDataTable()
+        all_long_tickers = list(set(self.loser_tickers_to_long + self.position_tickers))
+        
+        for ticker in all_long_tickers:
+            yfinance_table.add(YFinanceService().get_stock_data(ticker))
+            
+        self.active_long_positions: StockDataTable = yfinance_table.override(self.positions)
+
+        _logfile("Override operand 1 YFinance", yfinance_table)
+        _logfile("Override operand 2 Alpaca", self.positions)
+        _logfile("Override Result  YFinance_Alpaca", self.active_long_positions)
 
         self._report_state()
 
