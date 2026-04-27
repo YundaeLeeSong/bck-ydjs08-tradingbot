@@ -288,7 +288,7 @@ class Bumblebee:
             ##################################################################
             ###### LOGIC
             ##################################################################
-            buy_price = ceil_price * (1 + (0.1 * pct_amp / 100.0))
+            buy_price = ceil_price * (1 + (0.4 * pct_amp / 100.0))
             raw_qty = abs(dto.qty) - 0.01
             # order
             self._post_order(dto, 
@@ -314,7 +314,7 @@ class Bumblebee:
             ##################################################################
             ###### LOGIC
             ##################################################################
-            buy_price = floor_price * (1 - (0.1 * pct_amp / 100.0))
+            buy_price = floor_price * (1 - (0.2 * pct_amp / 100.0))
             raw_qty = abs(dto.qty)
             # order
             self._post_order(dto, 
