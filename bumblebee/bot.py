@@ -64,14 +64,14 @@ class Bumblebee:
                 
         self.account_dto: AccountDTO = AlpacaService().get_account_info()
         self.orders_table: ActiveOrderTable = AlpacaService().get_orders()
-        self.positions: StockDataTable = AlpacaService().get_positions()
+        self._positions: StockDataTable = AlpacaService().get_positions()
 
         self.unit_value: float = AlpacaService().get_unit_value(self.account_dto)
         self.is_entry: bool = AlpacaService().is_entry(self.account_dto)
         self.is_long: bool = AlpacaService().is_long(self.account_dto)
         self.is_short: bool = AlpacaService().is_short(self.account_dto)
 
-        self.position_tickers: List[str] = self.positions.get_tickers(active_only=True)
+        self.position_tickers: List[str] = self._positions.get_tickers(active_only=True)
 
         self.option_tickers: List[str] = (
             AlpacaService().get_tickers(["YieldMax"], ["Short"]) + 
@@ -95,23 +95,26 @@ class Bumblebee:
             max_mcap=100_000_000_000,
             min_change=15.0
         )
+        YFinanceService().get_stocks_table(
+            tickers=self.winning_tickers_to_short, 
+            graph_path="market_report/shorting"
+        )
 
         self.loser_tickers_to_long: List[str] = YFinanceService().get_loser_tickers(
             min_mcap=100_000_000_000,
             max_change=-4.5
         )
+        YFinanceService().get_stocks_table(
+            tickers=self.loser_tickers_to_long, 
+            graph_path="market_report/longing"
+        )
 
-        yfinance_table = StockDataTable()
-        all_long_tickers = list(set(self.loser_tickers_to_long + self.position_tickers))
+
+        yfinance_table = YFinanceService().get_stocks_table(self.loser_tickers_to_long + self.position_tickers)
+        self.active_long_positions: StockDataTable = yfinance_table.override(self._positions)
+
         
-        for ticker in all_long_tickers:
-            yfinance_table.add(YFinanceService().get_stock_data(ticker))
-            
-        self.active_long_positions: StockDataTable = yfinance_table.override(self.positions)
 
-        _logfile("Override operand 1 YFinance", yfinance_table)
-        _logfile("Override operand 2 Alpaca", self.positions)
-        _logfile("Override Result  YFinance_Alpaca", self.active_long_positions)
 
         self._report_state()
 
@@ -127,7 +130,7 @@ class Bumblebee:
         print(f"[Account] Is Long:           {self.is_long}")
         print(f"[Account] Is Short:          {self.is_short}")
         print(f"[Account] Open Orders:     {len(self.orders_table.get_all())}")
-        print(f"[Data] Position Tickers:     {self.position_tickers}")
+        print(f"[Data] Position Tickers Amount:     {len(self.active_long_positions.get_tickers())}")
         print(f"[Data] Option Tickers:       {self.option_tickers}")
         print(f"[Data] Option Tickers Inv:   {self.option_tickers_inv}")
         print(f"[Data] Index Tickers:        {self.index_tickers}")
@@ -210,7 +213,7 @@ class Bumblebee:
     def _soft_rebalance_long(self) -> None:
         """Executes logic for stocking up long positions (soft rebalance)."""
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
-        for alpaca_dto in self.positions.get_all(active_only=True):
+        for alpaca_dto in self.active_long_positions:
             # qty validate
             if alpaca_dto.qty < 0: continue # short position
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
@@ -228,7 +231,7 @@ class Bumblebee:
                 notional_value = self.unit_value / 4
                 buy_price = floor_price * (1 - (1.5 * pct_amp / 100.0))
                 raw_qty = notional_value / buy_price
-            elif (dto.qty == 0.01): # tickers to new entry
+            elif (dto.qty == 0.01 or dto.qty == 0): # tickers to new entry
                 notional_value = self.unit_value / 7
                 buy_price = floor_price * (1 - (0.5 * pct_amp / 100.0))
                 raw_qty = notional_value / buy_price
@@ -268,7 +271,7 @@ class Bumblebee:
     def _close_short(self) -> None:
         """Executes logic for closing short positions."""
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
-        for alpaca_dto in self.positions.get_all(active_only=True):
+        for alpaca_dto in self._positions.get_all(active_only=True):
             # qty validate
             if alpaca_dto.qty > 0: continue
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)

@@ -216,75 +216,138 @@ class YFinanceService:
 
     def get_stock_data(self, symbol: str) -> StockDataDTO:
         df = self.fetch_historical_data(symbol)
+        
+        # Fallback to basic empty DTO if no data is found
+        if df is None or df.empty:
+            return StockDataDTO(symbol=symbol, isActive=False)
+
+        # Build base DTO and run metrics using shared helper
+        result = self._create_dto_from_df(symbol, df)
+        if result is None:
+            return StockDataDTO(symbol=symbol, isActive=False)
+            
+        dto, _, _ = result
+        
+        # Fetch company info specifically for sector/industry/name
+        # (This is the only endpoint that requires .info)
         info = self.fetch_company_info(symbol)
+        dto.name = info.get('shortName', '') or info.get('longName', '')
+        dto.sector = info.get('sector', '')
+        dto.industry = info.get('industry', '')
+        dto.marketCap = info.get('marketCap', 0)
         
-        price = info.get('currentPrice', info.get('regularMarketPrice', 0.0))
-        change_pct = info.get('regularMarketChangePercent', 0.0)
-        volume = info.get('volume', info.get('regularMarketVolume', 0))
-        mcap = info.get('marketCap', 0)
-        company_name = info.get('shortName', '') or info.get('longName', '')
-        sector = info.get('sector', '')
-        industry = info.get('industry', '')
-        
+        return dto
+
+    def _extract_symbol_df(self, batch_df: pd.DataFrame, symbol: str) -> Optional[pd.DataFrame]:
+        """
+        Extracts a single ticker's DataFrame from a batched MultiIndex DataFrame.
+        """
+        # 1. Single ticker case (yfinance < 0.2.40 or older pandas behavior)
+        if not isinstance(batch_df.columns, pd.MultiIndex):
+            return batch_df.copy()
+            
+        # 2. Validate the symbol exists in the batch
+        if symbol not in batch_df.columns.levels[1]:
+            return None
+            
+        # 3. Extract columns belonging to this symbol
+        # xs(key, level) allows us to slice out the inner index ('Ticker' level) 
+        # from the columns, returning a clean, single-level DataFrame.
+        try:
+            return batch_df.xs(symbol, axis=1, level=1).copy()
+        except KeyError:
+            return None
+
+    def _create_dto_from_df(self, symbol: str, df: pd.DataFrame) -> Optional[StockDataDTO]:
+        """Calculates basic metrics and returns a StockDataDTO from a DataFrame."""
+        if df.empty:
+            return None
+
+        # Approximate current price, change, and volume from historical data
+        current_price = float(df['Close'].iloc[-1])
+        prev_price = float(df['Close'].iloc[-2]) if len(df) > 1 else current_price
+        change_pct = ((current_price - prev_price) / prev_price * 100) if prev_price > 0 else 0.0
+        volume = int(df['Volume'].iloc[-1])
+
         dto = StockDataDTO(
             symbol=symbol,
-            price=price,
+            price=current_price,
             pct_day_pnl=change_pct,
             volume=volume,
-            marketCap=mcap,
-            sector=sector,
-            industry=industry,
-            name=company_name,
             isAnalyzed=True,
             isActive=True
         )
+
+        df, metrics = analyze_stock_data(df)
+
+        dto.r_squared = metrics.get('r_squared', 0.0)
+        dto.slope = metrics.get('slope', 0.0)
+        dto.zero_freq = metrics.get('num_zeros', 0)
+        dto.pct_mad = metrics.get('mad', 0.0)
+        dto.pct_sd = metrics.get('sd', 0.0)
+
+        if metrics.get('priceAvg50') is not None and not metrics['priceAvg50'].empty:
+            dto.priceAvg50 = float(metrics['priceAvg50'].iloc[-1])
+        if metrics.get('priceAvg200') is not None and not metrics['priceAvg200'].empty:
+            dto.priceAvg200 = float(metrics['priceAvg200'].iloc[-1])
+        if metrics.get('rsi14') is not None and not metrics['rsi14'].empty:
+            dto.rsi14 = float(metrics['rsi14'].iloc[-1])
+            
+        return dto, df, metrics
+
+    def _save_plots(self, symbol: str, df: pd.DataFrame, metrics: dict, graph_path: str):
+        """Generates and saves analysis plots for a given ticker."""
+        plots = generate_all_plots(symbol, df, metrics)
+        if not plots: return
         
-        if df is not None and not df.empty:
-            df, metrics = analyze_stock_data(df)
-            
-            dto.r_squared = metrics.get('r_squared', 0.0)
-            dto.slope = metrics.get('slope', 0.0)
-            dto.zero_freq = metrics.get('num_zeros', 0)
-            dto.pct_mad = metrics.get('mad', 0.0)
-            dto.pct_sd = metrics.get('sd', 0.0)
-            
-            if metrics.get('priceAvg50') is not None and not metrics['priceAvg50'].empty:
-                dto.priceAvg50 = float(metrics['priceAvg50'].iloc[-1])
-            if metrics.get('priceAvg200') is not None and not metrics['priceAvg200'].empty:
-                dto.priceAvg200 = float(metrics['priceAvg200'].iloc[-1])
-            if metrics.get('rsi14') is not None and not metrics['rsi14'].empty:
-                dto.rsi14 = float(metrics['rsi14'].iloc[-1])
-                
-        return dto
+        if 'base_regression' in plots:
+            plots['base_regression'].savefig(os.path.join(graph_path, f"{symbol}.png"))
+            plt.close(plots['base_regression'])
+        if 'pct_ordinary' in plots:
+            plots['pct_ordinary'].savefig(os.path.join(graph_path, f"{symbol}_pct_ordinary.png"))
+            plt.close(plots['pct_ordinary'])
+        if 'pct_derivative' in plots:
+            plots['pct_derivative'].savefig(os.path.join(graph_path, f"{symbol}_pct_derivative.png"))
+            plt.close(plots['pct_derivative'])
 
     def get_stocks_table(self, tickers: List[str], graph_path: Optional[str] = None) -> StockDataTable:
         table = StockDataTable()
-        
-        if not tickers:
+        if not tickers: return table
+
+        if graph_path: os.makedirs(graph_path, exist_ok=True)
+        tickers = list(set(tickers))
+
+        # Perform a single batch download for all tickers to avoid rate limiting
+        try:
+            batch_df = yf.download(tickers, period="1y", interval="1d", progress=False, auto_adjust=False)
+        except Exception as e:
+            self._log_debug("batch_fetch_historical_data_error", {"tickers": tickers}, str(e))
+            print(f"Failed to batch fetch historical data: {e}")
             return table
 
-        if graph_path:
-            os.makedirs(graph_path, exist_ok=True)
-
+        if batch_df is None or batch_df.empty: return table
+        
         for symbol in tickers:
-            dto = self.get_stock_data(symbol)
-            table.add(dto)
-            
-            # Generate and save plots if graph_path is specified
-            if graph_path:
-                df = self.fetch_historical_data(symbol)
-                if df is not None and not df.empty:
-                    df, metrics = analyze_stock_data(df)
-                    plots = generate_all_plots(symbol, df, metrics)
-                    if plots:
-                        if 'base_regression' in plots:
-                            plots['base_regression'].savefig(os.path.join(graph_path, f"{symbol}.png"))
-                            plt.close(plots['base_regression'])
-                        if 'pct_ordinary' in plots:
-                            plots['pct_ordinary'].savefig(os.path.join(graph_path, f"{symbol}_pct_ordinary.png"))
-                            plt.close(plots['pct_ordinary'])
-                        if 'pct_derivative' in plots:
-                            plots['pct_derivative'].savefig(os.path.join(graph_path, f"{symbol}_pct_derivative.png"))
-                            plt.close(plots['pct_derivative'])
-            
+            try:
+                # Isolate symbol's data and clean
+                df_symbol = self._extract_symbol_df(batch_df, symbol)
+                if df_symbol is None: continue
+                
+                df_symbol.dropna(inplace=True)
+                if df_symbol.empty: continue
+
+                # Build DTO and run analysis
+                result = self._create_dto_from_df(symbol, df_symbol)
+                if not result: continue
+                dto, df_analyzed, metrics = result
+                table.add(dto)
+
+                # Export graphs if requested
+                if graph_path:
+                    self._save_plots(symbol, df_analyzed, metrics, graph_path)
+
+            except Exception as e:
+                self._log_debug("get_stocks_table_symbol_error", {"symbol": symbol}, str(e))
+                print(f"Error processing {symbol} from batch: {e}")
+
         return table
