@@ -221,8 +221,13 @@ class YFinanceService:
         if df is None or df.empty:
             return StockDataDTO(symbol=symbol, isActive=False)
 
+        # Flatten MultiIndex if yfinance >= 0.2.40 returned one for a single ticker
+        df_symbol = self._extract_symbol_df(df, symbol)
+        if df_symbol is None or df_symbol.empty:
+            return StockDataDTO(symbol=symbol, isActive=False)
+
         # Build base DTO and run metrics using shared helper
-        result = self._create_dto_from_df(symbol, df)
+        result = self._create_dto_from_df(symbol, df_symbol)
         if result is None:
             return StockDataDTO(symbol=symbol, isActive=False)
             

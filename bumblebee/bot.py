@@ -112,6 +112,9 @@ class Bumblebee:
 
         yfinance_table = YFinanceService().get_stocks_table(self.loser_tickers_to_long + self.position_tickers)
         self.active_long_positions: StockDataTable = yfinance_table.override(self._positions)
+        # _logfile("positions", self._positions, active_only=False)
+        # _logfile("long positions (actives)", self.active_long_positions, active_only=False)
+        # _logfile("long positions (actives)", self.active_long_positions)
 
         
 
@@ -213,7 +216,8 @@ class Bumblebee:
     def _soft_rebalance_long(self) -> None:
         """Executes logic for stocking up long positions (soft rebalance)."""
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
-        for alpaca_dto in self.active_long_positions:
+        for alpaca_dto in self.active_long_positions.get_all():
+            # print(alpaca_dto)
             # qty validate
             if alpaca_dto.qty < 0: continue # short position
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
