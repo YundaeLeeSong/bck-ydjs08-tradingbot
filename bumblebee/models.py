@@ -166,6 +166,19 @@ class StockDataTable:
         if active_only: return [dto for dto in self._data.values() if getattr(dto, 'isActive', False)]
         return list(self._data.values())
 
+    def get_tickers(self, active_only: bool = False) -> List[str]:
+        """
+        Retrieves all ticker symbols currently in the table.
+        
+        Args:
+            active_only (bool): If True, returns only symbols where isActive is True.
+            
+        Returns:
+            List[str]: A list of stored ticker symbols.
+        """
+        if active_only: return [symbol for symbol, dto in self._data.items() if getattr(dto, 'isActive', False)]
+        return list(self._data.keys())
+
     def remove(self, symbol: str) -> None:
         """
         Removes a StockDataDTO from the table by its ticker symbol.

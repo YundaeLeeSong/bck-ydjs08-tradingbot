@@ -42,6 +42,8 @@ class Bumblebee:
         self.is_long: bool = AlpacaService().is_long(self.account_dto)
         self.is_short: bool = AlpacaService().is_short(self.account_dto)
 
+        self.position_tickers: List[str] = self.positions.get_tickers(active_only=True)
+
         self.option_tickers: List[str] = (
             AlpacaService().get_tickers(["YieldMax"], ["Short"]) + 
             AlpacaService().get_tickers(["Roundhill", "WeeklyPay"])
@@ -84,6 +86,7 @@ class Bumblebee:
         print(f"[Account] Is Long:           {self.is_long}")
         print(f"[Account] Is Short:          {self.is_short}")
         print(f"[Account] Open Orders:     {len(self.orders_table.get_all())}")
+        print(f"[Data] Position Tickers:     {self.position_tickers}")
         print(f"[Data] Option Tickers:       {self.option_tickers}")
         print(f"[Data] Option Tickers Inv:   {self.option_tickers_inv}")
         print(f"[Data] Index Tickers:        {self.index_tickers}")
