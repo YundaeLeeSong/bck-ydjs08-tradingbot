@@ -39,4 +39,4 @@ class ESTTimer:
         Determines if the current US/Eastern time falls within extended trading hours.
         """
         t = datetime.now(self.est_tz).time()
-        return (self.pre_start <= t <= self.pre_end) or (self.post_start <= t <= self.post_end)
+        return not (self.pre_end < t < self.post_start)

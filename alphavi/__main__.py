@@ -378,9 +378,10 @@ def main():
     # Instantiate Bumblebee
     bot = Bumblebee(__name__)
     bot.rebalance("long", "soft")
+    # bot.close("short")
 
     
-    _logfile("order_check",AlpacaService().get_orders())
+    # _logfile("order_check",AlpacaService().get_orders())
     
 
 if __name__ == "__main__":

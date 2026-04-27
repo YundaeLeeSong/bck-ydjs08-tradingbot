@@ -168,7 +168,7 @@ class Bumblebee:
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
         for alpaca_dto in self.positions.get_all(active_only=True):
             # qty validate
-            if alpaca_dto.qty <= 0: continue
+            if alpaca_dto.qty < 0: continue # short position
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
             # price validate
             available_prices = [p for p in (dto.rt_price, dto.price) if p > 0]
@@ -180,11 +180,16 @@ class Bumblebee:
             ###### LOGIC
             ##################################################################
             pct_amp = max(dto.pct_sd, dto.pct_mad)
-            if -10 * pct_amp < dto.pct_net_pnl < 4 * pct_amp: continue # only big lost & gained tickers
+            if (dto.pct_net_pnl < -10 * pct_amp or 4 * pct_amp < dto.pct_net_pnl): # big lost/gained tickers
+                notional_value = self.unit_value / 4
+                buy_price = floor_price * (1 - (1.5 * pct_amp / 100.0))
+                raw_qty = notional_value / buy_price
+            elif (dto.qty == 0.01): # tickers to new entry
+                notional_value = self.unit_value / 7
+                buy_price = floor_price * (1 - (0.5 * pct_amp / 100.0))
+                raw_qty = notional_value / buy_price
+            else: continue 
             # calculation, constant notional value, consistent buying
-            notional_value = self.unit_value / 4
-            buy_price = floor_price * (1 - (1.5 * pct_amp / 100.0))
-            raw_qty = notional_value / buy_price
             # order
             self._post_order(dto, 
                 side="buy", 
@@ -218,4 +223,25 @@ class Bumblebee:
 
     def _close_short(self) -> None:
         """Executes logic for closing short positions."""
-        pass
+        # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
+        for alpaca_dto in self.positions.get_all(active_only=True):
+            # qty validate
+            if alpaca_dto.qty > 0: continue
+            dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
+            # price validate
+            available_prices = [p for p in (dto.rt_price, dto.price, dto.entry_price) if p > 0]
+            if not available_prices: continue # no price data
+            floor_price = min(available_prices)
+            ceil_price = max(available_prices)
+            ##################################################################
+            ###### LOGIC
+            ##################################################################
+            pct_amp = max(dto.pct_sd, dto.pct_mad)
+            buy_price = floor_price * (1 - (0.1 * pct_amp / 100.0))
+            raw_qty = abs(dto.qty)
+            # order
+            self._post_order(dto, 
+                side="buy", 
+                qty=raw_qty, 
+                limit_price=buy_price
+            )
