@@ -272,6 +272,15 @@ class Bumblebee:
 
     def _close_long(self) -> None:
         """Executes logic for closing long positions."""
+        # TODO: resolve issues with the following output...
+        # This is definitely not working correctly now.
+        # 102 &% of 88.20 is not 88.23...
+        # ============================================================
+
+        #   [OK] Canceled order 490713bd-152b-4628-9871-9e4654d7ee9c for LIT
+        #   [OK] Limit sell order placed: [LIT] 0.41 @ $88.23 = $36.17,, original price: $88.20 with amplitude: 2.08%
+        # 
+
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
         for alpaca_dto in self._positions.get_all(active_only=True):
             # % profit validate
