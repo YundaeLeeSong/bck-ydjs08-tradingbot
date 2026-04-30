@@ -220,7 +220,7 @@ class Bumblebee:
         for alpaca_dto in self.active_long_positions.get_all():
             # print(alpaca_dto)
             # % profit validate
-            pct_amp = max(dto.pct_sd, dto.pct_mad)
+            pct_amp = max(alpaca_dto.pct_sd, alpaca_dto.pct_mad)
             # qty validate
             if alpaca_dto.qty < 0: continue # short position
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
@@ -275,8 +275,8 @@ class Bumblebee:
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
         for alpaca_dto in self._positions.get_all(active_only=True):
             # % profit validate
-            pct_amp = max(dto.pct_sd, dto.pct_mad)
-            if (dto.pct_net_pnl < 2 * pct_amp): continue
+            pct_amp = max(alpaca_dto.pct_sd, alpaca_dto.pct_mad)
+            if (alpaca_dto.pct_net_pnl < 2.0 * pct_amp): continue
             # qty validate
             if alpaca_dto.qty <= 0.01: continue
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
@@ -288,13 +288,13 @@ class Bumblebee:
             ##################################################################
             ###### LOGIC
             ##################################################################
-            buy_price = ceil_price * (1 + (0.4 * pct_amp / 100.0))
+            sell_price = ceil_price * (1 + (1.0 * pct_amp / 100.0))
             raw_qty = abs(dto.qty) - 0.01
             # order
             self._post_order(dto, 
                 side="sell", 
                 qty=raw_qty, 
-                limit_price=buy_price
+                limit_price=sell_price
             )
 
     def _close_short(self) -> None:
@@ -302,7 +302,8 @@ class Bumblebee:
         # 1. all positions dto should be done this, dto = yf_dto.override(alpaca_dto)
         for alpaca_dto in self._positions.get_all(active_only=True):
             # % profit validate
-            pct_amp = max(dto.pct_sd, dto.pct_mad)
+            pct_amp = max(alpaca_dto.pct_sd, alpaca_dto.pct_mad)
+            if (alpaca_dto.pct_net_pnl < 1.0 * pct_amp): continue
             # qty validate
             if alpaca_dto.qty > 0: continue
             dto = YFinanceService().get_stock_data(alpaca_dto.symbol).override(alpaca_dto)
