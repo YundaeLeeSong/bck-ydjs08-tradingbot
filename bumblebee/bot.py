@@ -293,14 +293,20 @@ class Bumblebee:
             # % profit validate
             pct_amp = max(dto.pct_sd, dto.pct_mad)
             # qty validate
-            if dto.qty < 0: continue # short position
+            if dto.qty < 0:
+                print(f"[PASS] {dto.symbol}: Short position.")
+                continue # short position
             
             # price validate
             available_prices = [p for p in (dto.rt_price, dto.price) if p > 0]
-            if not available_prices: continue # no price data
+            if not available_prices:
+                print(f"[PASS] {dto.symbol}: No price data available.")
+                continue # no price data
             floor_price = min(available_prices)
             ceil_price = max(available_prices)
-            if 4 * self.unit_value < floor_price: continue # overpriced relative to account
+            if 4 * self.unit_value < floor_price:
+                print(f"[PASS] {dto.symbol}: Overpriced relative to account.")
+                continue # overpriced relative to account
             ##################################################################
             ###### LOGIC
             ##################################################################
@@ -308,15 +314,25 @@ class Bumblebee:
                 notional_value = self.unit_value / 4
                 buy_price = floor_price * (1 - (0.5 * pct_amp / 100.0))
                 raw_qty = notional_value / buy_price
-            elif (dto.pct_net_pnl < -10.0 * pct_amp or 4 * pct_amp < dto.pct_net_pnl): # big lost/gained tickers
+            elif (dto.pct_net_pnl < -10.0 * pct_amp): # big lost/gained tickers
                 notional_value = self.unit_value / 4
                 buy_price = floor_price * (1 - (1.5 * pct_amp / 100.0))
                 raw_qty = notional_value / buy_price
-            elif (dto.qty == 0.01 or dto.qty == 0): # tickers to new entry
+            elif (4 * pct_amp < dto.pct_net_pnl):
+                notional_value = self.unit_value / 4
+                buy_price = floor_price * (1 - (1.5 * pct_amp / 100.0))
+                raw_qty = notional_value / buy_price
+            elif (dto.qty == 0.01): # tickers to new entry
                 notional_value = self.unit_value / 7
                 buy_price = floor_price * (1 - (0.5 * pct_amp / 100.0))
                 raw_qty = notional_value / buy_price
-            else: continue 
+            elif (dto.qty == 0):
+                notional_value = self.unit_value / 7
+                buy_price = floor_price * (1 - (0.5 * pct_amp / 100.0))
+                raw_qty = notional_value / buy_price
+            else:
+                print(f"[PASS] {dto.symbol}: Did not meet soft rebalance long criteria.")
+                continue 
             # calculation, constant notional value, consistent buying
             # order
             self._post_order(dto, 
@@ -350,13 +366,19 @@ class Bumblebee:
         for dto in self.active_positions.get_all(active_only=True):
             # % profit validate
             pct_amp = max(dto.pct_sd, dto.pct_mad)
-            if (dto.pct_net_pnl < 2.0 * pct_amp): continue
+            if (dto.pct_net_pnl < 2.0 * pct_amp):
+                print(f"[PASS] {dto.symbol}: PNL < 2.0 * pct_amp.")
+                continue
             # qty validate
-            if dto.qty <= 0.01: continue
+            if dto.qty <= 0.01:
+                print(f"[PASS] {dto.symbol}: qty <= 0.01.")
+                continue
             
             # price validate
             available_prices = [p for p in (dto.rt_price, dto.price, dto.entry_price) if p > 0]
-            if not available_prices: continue # no price data
+            if not available_prices:
+                print(f"[PASS] {dto.symbol}: No price data available.")
+                continue # no price data
             floor_price = min(available_prices)
             ceil_price = max(available_prices)
             ##################################################################
@@ -376,13 +398,19 @@ class Bumblebee:
         for dto in self.active_positions.get_all(active_only=True):
             # % profit validate
             pct_amp = max(dto.pct_sd, dto.pct_mad)
-            if (dto.pct_net_pnl < 0.5 * pct_amp): continue
+            if (dto.pct_net_pnl < 0.5 * pct_amp):
+                print(f"[PASS] {dto.symbol}: PNL < 0.5 * pct_amp.")
+                continue
             # qty validate
-            if dto.qty > 0: continue
+            if dto.qty > 0:
+                print(f"[PASS] {dto.symbol}: Not a short position.")
+                continue
             
             # price validate
             available_prices = [p for p in (dto.rt_price, dto.price, dto.entry_price) if p > 0]
-            if not available_prices: continue # no price data
+            if not available_prices:
+                print(f"[PASS] {dto.symbol}: No price data available.")
+                continue # no price data
             floor_price = min(available_prices)
             ceil_price = max(available_prices)
             ##################################################################
