@@ -5,7 +5,7 @@ import mimetypes
 from pathlib import Path
 from email.message import EmailMessage
 from typing import List, Optional, Tuple
-from alphavi_util.core import get_env_var
+from ydjs_util.core import get_env_var
 
 class GmailService:
     """

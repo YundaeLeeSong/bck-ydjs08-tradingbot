@@ -8,6 +8,8 @@ to `.env` files located relative to execution paths or calling scripts.
 
 import os
 import sys
+import re
+import inspect
 from pathlib import Path
 from typing import Optional
 
@@ -74,7 +76,6 @@ def get_env_arr(env_var: str) -> list[str]:
     Returns:
         list[str]: A list of parsed string values, or an empty list if not found.
     """
-    import re
     val = get_env_var(env_var)
     if not val:
         return []
@@ -126,7 +127,6 @@ def get_resource(file_name: str) -> Optional[Path]:
         # 3. Fallback to trying relative to the calling script's location
         # (Assuming the caller is a few frames up)
         try:
-            import inspect
             caller_frame = inspect.stack()[1]
             caller_path = Path(caller_frame.filename).parent / candidate
             if caller_path.exists():

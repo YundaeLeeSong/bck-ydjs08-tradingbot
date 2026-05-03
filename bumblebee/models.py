@@ -6,7 +6,7 @@ financial stock data, including individual DTOs and aggregated tables.
 """
 
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from typing import Dict, List, Optional
 
 @dataclass
@@ -87,7 +87,6 @@ class StockDataDTO:
         Returns a new StockDataDTO by overriding self's attributes with other's attributes.
         An attribute in 'other' is considered defined if it is not its initial/default value.
         """
-        from dataclasses import fields
         result = StockDataDTO()
         for f in fields(self):
             name = f.name

@@ -6,18 +6,23 @@ strategy, deferring specific implementation steps to subclasses.
 """
 
 from typing import List, Optional
+import json
+import glob
+import os
+import shutil
+from datetime import datetime
+from dataclasses import asdict
+from ydjs_util.core import get_env_var, get_env_arr, get_resource
+from bumblebee.external.gmail_service import GmailService
 from bumblebee.external import AlpacaService
 from bumblebee.external import YFinanceService
 from bumblebee.models import AccountDTO, ActiveOrderTable, StockDataTable
 
-import os
 def _logfile(name: str, table, active_only: bool = True):
     os.makedirs("log", exist_ok=True)
     log_file = os.path.join("log", f"{name.lower().replace(' ', '_')}.json")
     
     if hasattr(table, 'get_all'):
-        import json
-        from dataclasses import asdict
         try:
             dtos = table.get_all(active_only=active_only)
         except TypeError:
@@ -183,12 +188,6 @@ class Bumblebee:
 
     def report_email(self) -> None:
         """Emails market reports based on a template and generated graph attachments."""
-        from alphavi_util.core import get_env_var, get_env_arr, get_resource
-        from bumblebee.external.gmail_service import GmailService
-        from datetime import datetime
-        import glob
-        from typing import List
-        
         non_interactive = get_env_var("EMAIL_NONINTERACTIVE")
         if non_interactive and non_interactive.lower() in ("true", "1", "yes"):
             print("Email sending skipped due to EMAIL_NONINTERACTIVE flag.")
@@ -245,6 +244,9 @@ class Bumblebee:
         
         # Send Longing report
         _send_report("Longing", ["market_report/longing/*.png"], "<strong>Longing:</strong> Focus on long position opportunities (large assets, cheap price).")
+
+        # Cleanup
+        shutil.rmtree("market_report", ignore_errors=True)
 
     # --- Public API for external orchestration ---
     

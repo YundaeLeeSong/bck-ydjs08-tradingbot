@@ -9,11 +9,14 @@ of the top-level market data loading endpoints.
 import sys
 import os
 import math
+import json
+from dataclasses import asdict
 # [Facade] (2): Consume the root facade to execute the high-level application flow.
 from bumblebee.external import FMPService
 from bumblebee.external import YFinanceService
 from bumblebee.external import AlpacaService
 from bumblebee import Bumblebee
+from bumblebee.models import StockDataTable
 
 try:
     # [Singleton] (3): Initialize the services early to validate the API keys and start debug modes.
@@ -35,8 +38,6 @@ def _logfile(name: str, table, active_only: bool = True):
     log_file = os.path.join("log", f"{name.lower().replace(' ', '_')}.json")
     
     if hasattr(table, 'get_all'):
-        import json
-        from dataclasses import asdict
         try:
             dtos = table.get_all(active_only=active_only)
         except TypeError:
@@ -57,10 +58,6 @@ def _logfile(name: str, table, active_only: bool = True):
 
 
 def test_fmp_data_override_alpaca():
-    from bumblebee.external import FMPService
-    from bumblebee.external import AlpacaService
-    from bumblebee.models import StockDataTable
-    
     tickers_to_track = ["AAPL", "MSTR", "TSLA"]
     
     try:
@@ -110,8 +107,6 @@ def test_alpaca():
     """
     Test routine to execute Alpaca endpoints and verify data fetching.
     """
-    from bumblebee.external import AlpacaService
-    
     try:
         # [Singleton] (3): Initialize the AlpacaService early to validate the API keys.
         service = AlpacaService()
@@ -124,8 +119,6 @@ def test_alpaca():
         _logfile("orders", orders_table)
         
         service.report()
-
-        from bumblebee.models import StockDataTable
 
         full_table = service.get_positions()
         _logfile("full_positions", full_table)
@@ -199,8 +192,6 @@ def test_yfinance():
     """
     Test routine to execute YFinance endpoints and verify data fetching.
     """
-    from bumblebee.external import YFinanceService
-    
     try:
         # [Singleton] (3): Initialize the YFinanceService early to test.
         service = YFinanceService(debug=True)
@@ -258,11 +249,6 @@ def test_yfinance():
         print(f"Error in test_yfinance: {e}")
 
 def test_fmp_data_override_yfinance_override_alpaca():
-    from bumblebee.external import FMPService
-    from bumblebee.external import YFinanceService
-    from bumblebee.external import AlpacaService
-    from bumblebee.models import StockDataTable
-    
     tickers_to_track = ["AAPL", "MSTR", "TSLA"]
     
     
@@ -291,10 +277,6 @@ def test_orders():
     """
     Test routine to execute Alpaca endpoints for creating and canceling orders.
     """
-    from bumblebee.external import FMPService
-    from bumblebee.external import YFinanceService
-    from bumblebee.external import AlpacaService
-    
     try:
         yfinance = YFinanceService()
         alpaca = AlpacaService()

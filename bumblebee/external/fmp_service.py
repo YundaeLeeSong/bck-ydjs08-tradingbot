@@ -9,7 +9,7 @@ import os
 import json
 import requests
 from typing import Optional, Any
-from alphavi_util.core import get_env_var
+from ydjs_util.core import get_env_var
 from bumblebee.models import StockDataDTO
 
 _DEBUG_LOG_ = "log_fmp"
