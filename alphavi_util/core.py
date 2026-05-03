@@ -87,7 +87,8 @@ def get_env_arr(env_var: str) -> list[str]:
 def get_resource(file_name: str) -> Optional[Path]:
     """
     Locates a resource file (e.g., .html template) considering standard execution
-    and PyInstaller temporary directories.
+    and PyInstaller temporary directories. Default assumes files are in 'resource' 
+    or 'resources' folders unless the user passed a path with directories.
 
     Args:
         file_name (str): The name or relative path of the file to locate.
@@ -98,29 +99,40 @@ def get_resource(file_name: str) -> Optional[Path]:
     if not file_name or not isinstance(file_name, str):
         return None
 
-    # 1. PyInstaller _MEIPASS
-    try:
-        meipass_path = Path(sys._MEIPASS) / file_name
-        if meipass_path.exists():
-            return meipass_path.resolve()
-    except AttributeError:
-        pass
+    file_path = Path(file_name)
+    if len(file_path.parts) > 1:
+        candidates = [file_path]
+    else:
+        candidates = [
+            Path("resource") / file_name,
+            Path("resources") / file_name,
+            Path(file_name)
+        ]
 
-    # 2. Execution directory
-    cwd_path = Path.cwd() / file_name
-    if cwd_path.exists():
-        return cwd_path.resolve()
+    for candidate in candidates:
+        # 1. PyInstaller _MEIPASS
+        try:
+            meipass_path = Path(sys._MEIPASS) / candidate
+            if meipass_path.exists():
+                return meipass_path.resolve()
+        except AttributeError:
+            pass
 
-    # 3. Fallback to trying relative to the calling script's location
-    # (Assuming the caller is a few frames up)
-    try:
-        import inspect
-        caller_frame = inspect.stack()[1]
-        caller_path = Path(caller_frame.filename).parent / file_name
-        if caller_path.exists():
-            return caller_path.resolve()
-    except Exception:
-        pass
+        # 2. Execution directory
+        cwd_path = Path.cwd() / candidate
+        if cwd_path.exists():
+            return cwd_path.resolve()
+
+        # 3. Fallback to trying relative to the calling script's location
+        # (Assuming the caller is a few frames up)
+        try:
+            import inspect
+            caller_frame = inspect.stack()[1]
+            caller_path = Path(caller_frame.filename).parent / candidate
+            if caller_path.exists():
+                return caller_path.resolve()
+        except Exception:
+            pass
 
     return None
 

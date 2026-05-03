@@ -187,6 +187,7 @@ class Bumblebee:
         from bumblebee.external.gmail_service import GmailService
         from datetime import datetime
         import glob
+        from typing import List
         
         non_interactive = get_env_var("EMAIL_NONINTERACTIVE")
         if non_interactive and non_interactive.lower() in ("true", "1", "yes"):
@@ -211,25 +212,39 @@ class Bumblebee:
             return
 
         # Inject date
-        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        html_content = html_content.replace("{date}", current_date)
+        current_time = datetime.now()
+        current_date_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        subject_date_str = current_time.strftime("[%Y/%m/%d]")
+        base_html = html_content.replace("{date}", current_date_str)
 
-        # Gather attachments
-        attachments = []
-        for path in ["market_report/shorting/*.png", "market_report/longing/*.png", "market_report/index/*.png"]:
-            attachments.extend(glob.glob(path))
+        def _send_report(report_type: str, paths: List[str], desc_html: str):
+            attachments = []
+            for path in paths:
+                attachments.extend(glob.glob(path))
+            
+            if not attachments:
+                print(f"No attachments found for {report_type}. Skipping email.")
+                return
 
-        print(f"Sending market report email to {len(recipients)} recipients with {len(attachments)} attachments...")
-        success, err = GmailService().send_email(
-            recipients=recipients,
-            subject=f"Market Report - {current_date}",
-            body_html=html_content,
-            attachments=attachments
-        )
-        if success:
-            print("Email sent successfully.")
-        else:
-            print(f"Failed to send email: {err}")
+            body_html = base_html.replace("{report_type}", report_type).replace("{description}", desc_html)
+
+            print(f"Sending {report_type} market report email to {len(recipients)} recipients with {len(attachments)} attachments...")
+            success, err = GmailService().send_email(
+                recipients=recipients,
+                subject=f"{subject_date_str} Market Report ({report_type} Opportunities)",
+                body_html=body_html,
+                attachments=attachments
+            )
+            if success:
+                print(f"{report_type} email sent successfully.")
+            else:
+                print(f"Failed to send {report_type} email: {err}")
+
+        # Send Shorting report
+        _send_report("Shorting", ["market_report/shorting/*.png"], "<strong>Shorting:</strong> Focus on short position opportunities (small assets, expensive price).")
+        
+        # Send Longing report
+        _send_report("Longing", ["market_report/longing/*.png"], "<strong>Longing:</strong> Focus on long position opportunities (large assets, cheap price).")
 
     # --- Public API for external orchestration ---
     
