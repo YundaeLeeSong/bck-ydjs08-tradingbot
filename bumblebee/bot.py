@@ -127,6 +127,7 @@ class Bumblebee:
         _logfile("active positions (actives)", self.active_positions)
         _logfile("long positions", self.active_long_positions, active_only=False)
         _logfile("long positions (actives)", self.active_long_positions)
+        _logfile("account info", self.account_dto)
 
         
 
@@ -140,11 +141,12 @@ class Bumblebee:
         print("\n" + "="*60)
         print(" TRADING FRAMEWORK INITIALIZATION REPORT")
         print("="*60)
-        print(f"[Account] Unit Value:           ${self.unit_value:.2f}")
-        print(f"[Account] Is Entry:             {self.is_entry}")
-        print(f"[Account] Is Long:              {self.is_long}")
-        print(f"[Account] Is Short:             {self.is_short}")
-        print(f"[Account] Open Orders:          {len(self.orders_table.get_all())}")
+        print(f"[Account] Unit Value:             ${self.unit_value:.2f}")
+        print(f"[Account] Is Entry:               {self.is_entry}")
+        print(f"[Account] Is Long:                {self.is_long}")
+        print(f"[Account] Is Short:               {self.is_short}")
+        print(f"[Account] Open Orders:            {len(self.orders_table.get_all())}")
+        print(f"[Account] daily % equity change:  {self.account_dto.pct_equity_change} %")
         print(f"[Data] Position Tickers Amount: {len(self.active_positions.get_tickers(active_only=True))}")
         print(f"[Data] Option Tickers:          {self.option_tickers}")
         print(f"[Data] Option Tickers Inv:      {self.option_tickers_inv}")
@@ -230,7 +232,7 @@ class Bumblebee:
             print(f"Sending {report_type} market report email to {len(recipients)} recipients with {len(attachments)} attachments...")
             success, err = GmailService().send_email(
                 recipients=recipients,
-                subject=f"{subject_date_str} Market Report ({report_type} Opportunities)",
+                subject=f"{subject_date_str} Market Report ({report_type})",
                 body_html=body_html,
                 attachments=attachments
             )
@@ -240,10 +242,10 @@ class Bumblebee:
                 print(f"Failed to send {report_type} email: {err}")
 
         # Send Shorting report
-        _send_report("Shorting", ["market_report/shorting/*.png"], "<strong>Shorting:</strong> Focus on short position opportunities (small assets, expensive price).")
+        _send_report("Shorting", ["market_report/shorting/*.png"], "<strong>Shorting:</strong> Focus on short position opportunities (small-cap, higher price).")
         
         # Send Longing report
-        _send_report("Longing", ["market_report/longing/*.png"], "<strong>Longing:</strong> Focus on long position opportunities (large assets, cheap price).")
+        _send_report("Longing", ["market_report/longing/*.png"], "<strong>Longing:</strong> Focus on long position opportunities (large-cap (including M7), lower price).")
 
         # Cleanup
         shutil.rmtree("market_report", ignore_errors=True)

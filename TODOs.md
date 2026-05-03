@@ -1,10 +1,30 @@
-1. Add a `created_at` and `equity_last` (not sure about what this field is from API call, you check it by running `python main.py`), and `pct_equity_change` fields for account DTO, from `bumblebee/external/alpaca_service.py`, you will need to see log_alpaca to exactly see the value of the field.
-2. pct_equity_change should be calculated as pct change of equity_last to equity.
-3. `bumblebee/est_timer.py` should be able to offer a accessor for the user to easily input (start_day, today) it should return a list of date objects that are iterable for API calls for every day btw start_day and today. (ofc, if you can take advantage of runtime by identifying weekdays and weekends, implement the such algo.)
-4. **Refactor `report` Method in `AlpacaService`**:
-    *   Target: `bumblebee/external/alpaca_service.py`
-    *   Goal: Extract the logic inside the `report()` method into distinct, dedicated getter methods for each data type.
-    *   Create new methods (e.g., `get_transactions()`, `get_journal_entries()`, `get_interests()`, `get_fees()`, `get_dividends()`), and use date param to get daily records with maximun number of rows ("limit":100). (e.g. "date":2026-05-01)
-    *   Update the `report()` method (or remove it entirely if no longer needed as a bulk writer) to utilize these new individual methods, maintaining the existing file writing behavior if debug mode is off.
-    *   Ensure any related changes respect the current data structures and error handling established in `fetch_endpoint`.
-5. with implementation of (3) and (4), you should be able to log report data by dates (test code should be in `alphavi/__main__.py`).
+# Reporting System Implementation Plan
+
+## 1. Model Enhancements
+- [ ] **Update `AccountDTO`**: Add fields for aggregated account metrics:
+    - `total_fees`: Combined trading and service fees.
+    - `total_jofs`: Journal of Funds / adjustments.
+    - `total_deposits`: Total cash inflows from transfers.
+    - `total_withdrawals`: Total cash outflows from transfers.
+- [ ] **Update `StockDataDTO`**: Add fields for ticker-specific cash flows:
+    - `cash_spent`: Total cost of buy activities.
+    - `cash_received`: Total proceeds from sell activities.
+
+## 2. AlpacaService Refactoring
+- [ ] **`get_account_info(is_report=False, after=None, until=None)`**:
+    - If `is_report`, fetch activities via `_fetch_activities(after, until)`.
+    - Iterate through activities to accumulate `total_fees`, `total_jofs`, `total_deposits`, and `total_withdrawals`.
+    - Map these values to the `AccountDTO`.
+- [ ] **`get_positions(is_report=False, after=None, until=None)`**:
+    - If `is_report`, fetch activities via `_fetch_activities(after, until)`.
+    - Group trade activities (fills) by ticker.
+    - Calculate `cash_spent` and `cash_received` for each ticker.
+    - Map these values to the corresponding `StockDataDTO` in the `StockDataTable`.
+
+## 3. Activity Aggregation Logic
+- [ ] **Categorization**: Use `if-elif-else` block to handle different Alpaca activity types:
+    - `FILL`: Track buy/sell amounts for `StockDataDTO`.
+    - `FEE`: Track for `total_fees`.
+    - `JNLC` / `JNLS`: Track for `total_jofs`.
+    - `ACATC` / `ACATS`: Track for deposits/withdrawals.
+    - *Note: Identify and handle other relevant activity types as discovered.*

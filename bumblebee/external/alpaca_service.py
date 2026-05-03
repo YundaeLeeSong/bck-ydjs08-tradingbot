@@ -13,7 +13,7 @@ import requests
 from typing import Optional, Any, List
 from ydjs_util.core import get_env_var
 
-from bumblebee.models import StockDataDTO, StockDataTable, ActiveOrderDTO, ActiveOrderTable, AccountDTO
+from bumblebee.models import StockDataDTO, StockDataTable, ActiveOrderDTO, ActiveOrderTable, AccountDTO, AlpacaDateTimeDTO
 from bumblebee.est_timer import ESTTimer
 
 _DEBUG_LOG_ = "log_alpaca"
@@ -357,6 +357,16 @@ class AlpacaService:
             dto.daytrade_count = int(data.get("daytrade_count", 0))
         except (ValueError, TypeError):
             pass
+
+        dto.created_at = data.get("created_at", "")
+        try:
+            dto.last_equity = float(data.get("last_equity", 0.0))
+        except (ValueError, TypeError):
+            pass
+
+        if dto.last_equity > 0:
+            dto.pct_equity_change = ((dto.equity - dto.last_equity) / dto.last_equity) * 100.0
+            if abs(dto.pct_equity_change - 0) < 0.001: dto.pct_equity_change = 0
             
         return dto
 
@@ -566,32 +576,61 @@ class AlpacaService:
             print(f"  [OK] Limit {side} order placed: [{dto.symbol}] {polished_qty} @ ${polished_price} = ${polished_qty * polished_price:.2f},, original price: ${dto.rt_price:.2f} with amplitude: {max(dto.pct_mad, dto.pct_sd):.2f}%")
         return response
 
-    def report(self) -> None:
+    def _fetch_activities(self, after: Optional[AlpacaDateTimeDTO] = None, until: Optional[AlpacaDateTimeDTO] = None) -> List[Any]:
+        params = {"direction": "asc"}
+        if after and after.raw: params["after"] = after.raw
+        if until and until.raw: params["until"] = until.raw
+        
+        all_activities = []
+        
+        while True:
+            response = self.fetch_endpoint("account/activities", params)
+            if not response or not isinstance(response, list):
+                break
+            
+            all_activities.extend(response)
+            
+            if len(response) < 100:  # Assuming default page_size is 100
+                break
+                
+            # [Pagination] Use the ID of the last item in the current batch as the anchor 
+            # for the next request. With direction="asc", the API will return activities 
+            # created strictly after this ID.
+            params["page_token"] = response[-1]["id"]  # Set anchor ID to fetch next 100 items starting AFTER this one
+            
+        if self.debug:
+            os.makedirs(_DEBUG_LOG_, exist_ok=True)
+            file_path = os.path.join(_DEBUG_LOG_, "alpaca_account_activities.json")
+            with open(file_path, "w") as f:
+                json.dump(all_activities, f, indent=4)
+
+        return all_activities
+
+    def report(self, after: Optional[AlpacaDateTimeDTO] = None, until: Optional[AlpacaDateTimeDTO] = None) -> None:
         """
         Fetches various account activities and positions, and saves them
-        as JSON files into the 'finance_report' folder.
+        as JSON files into the 'finance_report' folder (or 'finance_report/all' if range provided).
 
         No-op when debug mode is off (no API calls and no file I/O).
         """
-        if self.debug:
-            pass
+        if not self.debug:
+            return
         
+        report_dir = "finance_report"
+        if after or until:
+            after_str = after.date_str if after else ""
+            until_str = until.date_str if until else ""
+            report_dir = os.path.join(report_dir, f"{after_str}_to_{until_str}" if after_str and until_str else "range")
+        os.makedirs(report_dir, exist_ok=True)
 
-        if (not self.debug): os.makedirs("finance_report", exist_ok=True)
-        
-
-        endpoints = {
-            "transactions.json": ("account/activities", {"activity_types": "FILL", "limit": 100}),
-            "positions.json": ("positions", None),
-            "journal_entries.json": ("account/activities", {"activity_types": "JNLC", "limit": 100}),
-            "interests.json": ("account/activities", {"activity_types": "INT", "limit": 100}),
-            "fees.json": ("account/activities", {"activity_types": "FEE", "limit": 100}),
-            "dividends.json": ("account/activities", {"activity_types": "DIV", "limit": 100})
+        data_map = {
+            "activities.json": self._fetch_activities(after, until),
+            "positions.json": self.fetch_endpoint("positions")
         }
-        for filename, (endpoint, params) in endpoints.items():
-            data = self.fetch_endpoint(endpoint, params)
-            if not self.debug and data is not None:
-                file_path = os.path.join("finance_report", filename)
+
+        for filename, data in data_map.items():
+            if data is not None:
+                file_path = os.path.join(report_dir, filename)
                 with open(file_path, "w") as f:
                     json.dump(data, f, indent=4)
-                print(f"Saved {filename} to finance_report directory.")
+                print(f"Saved {filename} to {report_dir} directory.")

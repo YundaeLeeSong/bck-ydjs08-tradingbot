@@ -188,6 +188,24 @@ def test_alpaca():
 
 
 
+def test_alpaca_report():
+    """
+    Test routine to execute Alpaca endpoints for report generation by dates using a single call.
+    """
+    try:
+        service = AlpacaService()
+        account_dto = service.get_account_info()
+        from bumblebee.models import AlpacaDateTimeDTO
+
+        start_day = account_dto.created_at_parsed
+        # start_day = AlpacaDateTimeDTO("2026-04-26T00:00:00Z")
+        today = AlpacaDateTimeDTO.now()
+
+        service.report(after=start_day, until=today)
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
 def test_yfinance():
     """
     Test routine to execute YFinance endpoints and verify data fetching.
@@ -353,13 +371,13 @@ def main():
     # test_fmp_data_override_yfinance_override_alpaca()
     # test_orders()
 
-
+    test_alpaca_report()
 
 
 
     # Instantiate Bumblebee
     bot = Bumblebee(__name__)
-    bot.report_email()
+    # bot.report_email()
     # bot.rebalance("long", "soft")
     # bot.close("long")
     # bot.close("short")
