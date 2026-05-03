@@ -1,0 +1,5 @@
+1. I need to add another function @alphavi_util/core.py, I need to get_env_arr, meaing, if there is any delimeter (e.g. ;,:,...) convention of bash/batch indicating multiple substring values in a string, it should parse it into a list data then return. (assume environment has example of RECIPIENTS=a;b;c and SENDERS=d:e:f, delimiter examples not limited to only these two, find any if there is.)
+2. have a look @bumblebee/external package, it has a lot of external services layer. I need another service for gmail smtp service, refactor @gmailproxy.py entirely then add it as a service of @bumblebee/external
+3. Next, time to combine (1) and (2), I need to email market reports (shorting and longing data) as attachments and base .html template file to automate date reported. You might need another function, get_resource, @alphavi_util/core.py to specify where the .html file is located, and use get_env_arr to get all the RECIPIENTS and get_env_var to get 
+SMTP_HOST, SMTP_PORT, SMTP_SECURITY, SMTP_USERNAME, SMTP_PASSWORD, SMTP_SENDER, EMAIL_TIMEOUT, 
+EMAIL_NONINTERACTIVE.

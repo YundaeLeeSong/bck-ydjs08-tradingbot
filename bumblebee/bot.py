@@ -237,7 +237,11 @@ class Bumblebee:
             ##################################################################
             ###### LOGIC
             ##################################################################
-            if (dto.pct_net_pnl < -10 * pct_amp or 4 * pct_amp < dto.pct_net_pnl): # big lost/gained tickers
+            if (pct_amp > 10.0 and dto.pct_net_pnl < -3.0 * pct_amp): # big lost/gained tickers
+                notional_value = self.unit_value / 4
+                buy_price = floor_price * (1 - (0.5 * pct_amp / 100.0))
+                raw_qty = notional_value / buy_price
+            elif (dto.pct_net_pnl < -10.0 * pct_amp or 4 * pct_amp < dto.pct_net_pnl): # big lost/gained tickers
                 notional_value = self.unit_value / 4
                 buy_price = floor_price * (1 - (1.5 * pct_amp / 100.0))
                 raw_qty = notional_value / buy_price
@@ -305,7 +309,7 @@ class Bumblebee:
         for dto in self.active_positions.get_all(active_only=True):
             # % profit validate
             pct_amp = max(dto.pct_sd, dto.pct_mad)
-            if (dto.pct_net_pnl < 1.0 * pct_amp): continue
+            if (dto.pct_net_pnl < 0.5 * pct_amp): continue
             # qty validate
             if dto.qty > 0: continue
             
