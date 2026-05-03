@@ -181,6 +181,56 @@ class Bumblebee:
             self.liquidate("short")
             self.close("short")
 
+    def report_email(self) -> None:
+        """Emails market reports based on a template and generated graph attachments."""
+        from alphavi_util.core import get_env_var, get_env_arr, get_resource
+        from bumblebee.external.gmail_service import GmailService
+        from datetime import datetime
+        import glob
+        
+        non_interactive = get_env_var("EMAIL_NONINTERACTIVE")
+        if non_interactive and non_interactive.lower() in ("true", "1", "yes"):
+            print("Email sending skipped due to EMAIL_NONINTERACTIVE flag.")
+            return
+
+        recipients = get_env_arr("RECIPIENTS")
+        if not recipients:
+            print("No recipients configured. Skipping email report.")
+            return
+
+        template_path = get_resource("market_report_template.html")
+        if not template_path:
+            print("Could not locate market_report_template.html. Skipping email report.")
+            return
+
+        try:
+            with open(template_path, "r", encoding="utf-8") as f:
+                html_content = f.read()
+        except Exception as e:
+            print(f"Error reading template: {e}")
+            return
+
+        # Inject date
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        html_content = html_content.replace("{date}", current_date)
+
+        # Gather attachments
+        attachments = []
+        for path in ["market_report/shorting/*.png", "market_report/longing/*.png", "market_report/index/*.png"]:
+            attachments.extend(glob.glob(path))
+
+        print(f"Sending market report email to {len(recipients)} recipients with {len(attachments)} attachments...")
+        success, err = GmailService().send_email(
+            recipients=recipients,
+            subject=f"Market Report - {current_date}",
+            body_html=html_content,
+            attachments=attachments
+        )
+        if success:
+            print("Email sent successfully.")
+        else:
+            print(f"Failed to send email: {err}")
+
     # --- Public API for external orchestration ---
     
     def initialize(self) -> None:

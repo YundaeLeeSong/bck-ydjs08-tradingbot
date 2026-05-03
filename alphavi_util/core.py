@@ -61,3 +61,66 @@ def get_env_var(env_var: str) -> Optional[str]:
                 return val
 
     return os.getenv(env_var)
+
+
+def get_env_arr(env_var: str) -> list[str]:
+    """
+    Retrieves an environment variable and parses it into a list of strings,
+    splitting by common delimiters (e.g., ';', ':', ',').
+
+    Args:
+        env_var (str): The name of the environment variable to retrieve.
+
+    Returns:
+        list[str]: A list of parsed string values, or an empty list if not found.
+    """
+    import re
+    val = get_env_var(env_var)
+    if not val:
+        return []
+    
+    # Split by ;, :, or , and filter out empty strings
+    parts = re.split(r'[;:,]+', val)
+    return [p.strip() for p in parts if p.strip()]
+
+
+def get_resource(file_name: str) -> Optional[Path]:
+    """
+    Locates a resource file (e.g., .html template) considering standard execution
+    and PyInstaller temporary directories.
+
+    Args:
+        file_name (str): The name or relative path of the file to locate.
+
+    Returns:
+        Optional[Path]: The absolute path to the resource, or None if not found.
+    """
+    if not file_name or not isinstance(file_name, str):
+        return None
+
+    # 1. PyInstaller _MEIPASS
+    try:
+        meipass_path = Path(sys._MEIPASS) / file_name
+        if meipass_path.exists():
+            return meipass_path.resolve()
+    except AttributeError:
+        pass
+
+    # 2. Execution directory
+    cwd_path = Path.cwd() / file_name
+    if cwd_path.exists():
+        return cwd_path.resolve()
+
+    # 3. Fallback to trying relative to the calling script's location
+    # (Assuming the caller is a few frames up)
+    try:
+        import inspect
+        caller_frame = inspect.stack()[1]
+        caller_path = Path(caller_frame.filename).parent / file_name
+        if caller_path.exists():
+            return caller_path.resolve()
+    except Exception:
+        pass
+
+    return None
+

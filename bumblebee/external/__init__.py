@@ -14,9 +14,11 @@ Example:
 from .alpaca_service import AlpacaService
 from .fmp_service import FMPService
 from .yfinance_service import YFinanceService
+from .gmail_service import GmailService
 
 __all__ = [
     "AlpacaService",
     "FMPService",
     "YFinanceService",
+    "GmailService",
 ]

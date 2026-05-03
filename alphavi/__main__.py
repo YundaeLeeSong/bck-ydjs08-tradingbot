@@ -377,6 +377,7 @@ def main():
 
     # Instantiate Bumblebee
     bot = Bumblebee(__name__)
+    bot.report_email()
     # bot.rebalance("long", "soft")
     # bot.close("long")
     # bot.close("short")
