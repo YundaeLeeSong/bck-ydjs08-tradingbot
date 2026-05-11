@@ -63,6 +63,16 @@ class StockDataDTO:
     epsAvg: float = 0.0     # Earnings Per Share (fmp)
     epsHigh: float = 0.0    # Earnings Per Share (fmp)
 
+    # 8. Reporting Data
+    total_cash_spent: float = 0.0
+    total_cash_received: float = 0.0
+    total_dividend: float = 0.0
+    total_position_value: float = 0.0
+    unrealized_pnl: float = 0.0
+    realized_pnl: float = 0.0
+    total_operational_pnl: float = 0.0
+    net_pnl: float = 0.0
+
     def __repr__(self) -> str:
         """
         Returns a JSON string representation of the DTO.

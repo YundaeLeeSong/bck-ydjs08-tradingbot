@@ -1,0 +1,57 @@
+\documentclass{article}
+\newcommand{\equitythreshold}{\$25,000}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+% User-action highlights: \uline{...} from package ulem (breaks across lines). Do not use \underline.
+\usepackage[normalem]{ulem}
+\geometry{a4paper, margin=1in}
+
+\title{Alpaca Reference: Pattern Day Trading}
+\author{Jaehoon Song}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+A margin account becomes a \textbf{PDT}\footnote{\textbf{Pattern day trader (PDT).} A FINRA classification for margin accounts that meet the day-trade count and percentage test in a rolling five-business-day window.} when it meets the FINRA pattern day trading test. Alpaca enforces the rule and adds its own order checks. \textbf{FINRA}\footnote{\textbf{Financial Industry Regulatory Authority (FINRA).} Self-regulatory organization that sets US margin and day-trading rules brokers must follow.} publishes the underlying regulatory text.
+
+\section{The FINRA test (four trades and six percent)}
+Within the same rolling five business days, both of the following must be true.
+\begin{itemize}
+  \item The account executes four or more \textbf{day trades}\footnote{\textbf{Day trade.} A same-calendar-day round trip (including extended hours), for example a buy then sell of the same stock, or a short sale then cover on the same day.}.
+  \item Day trades make up more than six percent of all trades in that same window.
+\end{itemize}
+Same-day round trips in \textbf{crypto}\footnote{Crypto is not marginable at Alpaca in the same way as equities. PDT logic does not apply to crypto orders, and crypto round trips do not add to the equity PDT day-trade count.} do not count toward this equity PDT test.
+
+\section{Alpaca PDT protection on orders}
+Alpaca evaluates the rule on each order submit. If an exit could create a fourth day trade in the window while prior-day closing \textbf{account equity}\footnote{\textbf{Account equity (PDT context).} Alpaca compares the prior trading day's closing equity to \equitythreshold{} when deciding whether to apply this protection at order time.} is below \equitythreshold, Alpaca may reject the order with HTTP 403 (Forbidden). The engine also treats some pending buy and sell pairs as potential day trades because fills can occur out of submission order.
+
+\section{Equity above \equitythreshold}
+When equity stays above \equitythreshold, a PDT flag reads as a normal status on a margin account rather than a hard block on day trading. You are not limited to three day trades in five business days in the way sub-threshold accounts are under the retail pattern. Day trading buying power for designated PDT accounts follows Alpaca's published multiplier rules (for example start-of-day \texttt{daytrading\_buying\_power} tied to a 4x style calculation on prior close). Overnight margin still follows standard Reg~T maintenance rules unless your agreements say otherwise.
+
+\newpage
+
+\section{Equity below \equitythreshold{} at day end}
+If securities equity finishes a trading day under \equitythreshold, Alpaca can block new day trades on the next business day until any of the following is true.
+\begin{itemize}
+  \item Alpaca grants a formal PDT restriction lift.
+  \item Alpaca grants a \textbf{one-time PDT removal}\footnote{\textbf{One-time PDT removal.} Alpaca-specific relief with lifetime limits and extra agreements. Read Alpaca's current disclosure before you request it.}.
+  \item End-of-day equity is back above \equitythreshold{} again.
+\end{itemize}
+
+\section{Lifts, removal, and support}
+\uline{Email \texttt{support@alpaca.markets}} to ask about a restriction lift or a one-time PDT removal. Alpaca states that after some lifts, if you place another day trade while still under the equity rule, the account may be limited to liquidation-only trading for ninety calendar days or until the \equitythreshold{} rule is satisfied again. Read the latest User Protection text for the exact sequence that applies to your account type.
+
+\section{Day trade margin calls (DTMC)}
+Alpaca also runs \textbf{DTMC}\footnote{\textbf{Day trade margin call (DTMC).} A separate margin issue from the PDT label. It can arise when same-day exposure exceeds the day trading buying power you had at the start of the session.} protections so entries or exits that would breach day trading buying power can be blocked. Default settings favor blocking risky entries. You cannot turn both DTMC protections off. \uline{Ask Alpaca support} if you need the stricter versus exit-focused protection mode changed.
+
+\section{Yield, interest, and product tiers}
+Some cash-yield, interest-on-cash, or promotional programs use their own eligibility rules. A PDT flag or a margin restriction can change which products you qualify for. \uline{Read the current program terms in the dashboard or marketing pages} instead of assuming the same rate tier as a non-PDT cash account.
+
+\section{Bots and the API}
+Expect HTTP 403 when a protective rule blocks an order. 
+\uline{Use the Account API fields}, multipliers, and buying power to branch trading logic. \uline{Test in paper} with a balance near what you will run live so PDT and buying power math match production.
+
+\end{document}

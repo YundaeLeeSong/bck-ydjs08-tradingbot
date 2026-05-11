@@ -200,7 +200,7 @@ def test_alpaca_report():
         start_day = account_dto.created_at_parsed
         # start_day = AlpacaDateTimeDTO("2026-04-26T00:00:00Z")
         today = AlpacaDateTimeDTO.now()
-
+        
         service.report(after=start_day, until=today)
     except ValueError as e:
         print(f"Error: {e}")
@@ -256,6 +256,38 @@ def test_yfinance():
             'BUG', 'CHAT', 'IGV', 'IGPT', 'AOTS', # software
             'WEBL', 'SOXX', # Hardware
         ]
+
+        index_tickers = [
+            'BITW', # crypto
+            'SPY', # essentials
+            'QQQ', # Tech
+            'DIA', # dow johns
+            'IWM', # russell 2000
+            'UFO', # Space
+            'QTUM', # qunatum computing
+            'BUG', # Cybersecurity
+            "CIBR", 
+            'CHAT', # gen AI
+            'IGPT', 
+            'AIQ', 
+            'IGV', # Tech-Software
+            'WEBL', # Internet 
+            'SOXX', # Hardware
+            "XLK", # Technology
+            "XLV", # Healthcare
+            "XLF", # Financials
+            "XLE", # Energy
+            "XLI", # Industrials
+            "XLY", # Consumer Discretionary
+            "XLP",  # Consumer Staples
+            "SMH", 
+            "SKYY", # Cloud
+            "BOTZ", 
+            "PAVE", 
+            "LIT", 
+            "NUKZ",
+        ]
+
         if index_tickers:
             test_table = service.get_stocks_table(
                 tickers=index_tickers,
@@ -339,8 +371,8 @@ def test_orders():
         print("\n--- [TEST] FETCHING ACTIVE ORDERS ---")
         orders_table = alpaca.get_orders()
         _logfile("orders_post_test", orders_table)
-        print(f"Active orders found: {len(orders_table.get_all())}")
-        for order in orders_table.get_all():
+        print(f"Active orders found: {len(orders_table)}")
+        for order in orders_table:
             print(f"  {order.symbol}: {order.side} {order.qty} @ ${order.limit_price} (ID: {order.id})")
 
         # print("\n--- [TEST] DELETING ORDERS ---")
@@ -351,7 +383,7 @@ def test_orders():
         # print("\n--- [TEST] VERIFYING DELETIONS ---")
         # orders_table_after = alpaca.get_orders()
         # _logfile("orders_after_delete_test", orders_table_after)
-        # print(f"Active orders found after deletion: {len(orders_table_after.get_all())}")
+        # print(f"Active orders found after deletion: {len(orders_table_after)}")
 
     except Exception as e:
         print(f"Error in test_orders: {e}")
@@ -359,8 +391,36 @@ def test_orders():
 
 
 
+def test_holdings():
+    from ydjs_util import get_env_arr
+    index_tickers = get_env_arr("INDICES")
+    
+    # 1. Fetch all holdings without constraints
+    all_holdings = YFinanceService().get_etf_holdings(index_tickers)
+    print("\n--- [TEST] ETF HOLDINGS (ALL) ---")
+    print(f"Found {len(all_holdings)} unique holdings across the provided ETFs.")
+    
+    # 2. Fetch large cap holdings (e.g., > $50 Billion)
+    large_caps = YFinanceService().get_etf_holdings(index_tickers, min_mcap=50_000_000_000)
+    print("\n--- [TEST] ETF HOLDINGS (LARGE CAPS > $50B) ---")
+    print(f"Found {len(large_caps)} large cap holdings.")
+    print(large_caps)
+    
+    # 3. Fetch small/mid cap holdings (e.g., < $50 Billion)
+    small_caps = YFinanceService().get_etf_holdings(index_tickers, max_mcap=50_000_000_000)
+    print("\n--- [TEST] ETF HOLDINGS (SMALL/MID CAPS < $50B) ---")
+    print(f"Found {len(small_caps)} small/mid cap holdings.")
+    print(small_caps)
 
+def sell(qty: float, ticker: str, price: float):
+    service = AlpacaService()
+    dto = service.get_stock_data(ticker)
+    service.post_order(dto, side="sell", qty=qty, limit_price=price)
 
+def buy(qty: float, ticker: str, price: float):
+    service = AlpacaService()
+    dto = service.get_stock_data(ticker)
+    service.post_order(dto, side="buy", qty=qty, limit_price=price)
 
 
 def main():
@@ -371,19 +431,29 @@ def main():
     # test_fmp_data_override_yfinance_override_alpaca()
     # test_orders()
 
-    test_alpaca_report()
+    # test_alpaca_report()
 
+    # test_holdings()
 
-
-    # Instantiate Bumblebee
-    bot = Bumblebee(__name__)
+    # # Instantiate Bumblebee
+    # bot = Bumblebee(__name__)
     # bot.report_email()
     # bot.rebalance("long", "soft")
-    # bot.close("long")
-    # bot.close("short")
+
+    # Bumblebee(__name__).report_email()
+    # Bumblebee(__name__).rebalance("long", "soft")
+    # Bumblebee(__name__).close("long")
+    # Bumblebee(__name__).close("short")
+    Bumblebee(__name__).liquidate("long")
+    # Bumblebee(__name__).liquidate("short")
+    # AlpacaService().report()
+
+    # buy(42, "ICOI", 11.9)
+    # sell(41.11, "CONY", 23.35)
 
     
     # _logfile("order_check",AlpacaService().get_orders())
+    pass
     
 
 if __name__ == "__main__":

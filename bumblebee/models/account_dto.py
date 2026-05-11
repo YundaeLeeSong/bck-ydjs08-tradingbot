@@ -24,6 +24,12 @@ class AccountDTO:
     daytrade_count: int = 0
     created_at: str = ""
 
+    # Reporting Fields
+    total_deposits: float = 0.0
+    total_withdrawals: float = 0.0
+    total_interests: float = 0.0
+    total_fees: float = 0.0
+
     @property
     def created_at_parsed(self) -> AlpacaDateTimeDTO:
         return AlpacaDateTimeDTO(self.created_at)

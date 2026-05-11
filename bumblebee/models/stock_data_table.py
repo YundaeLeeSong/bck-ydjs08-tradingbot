@@ -107,6 +107,24 @@ class StockDataTable:
             else: result.add(dto)
         return result
 
+    def filter_active(self) -> 'StockDataTable':
+        """
+        Returns a new StockDataTable containing only the active DTOs.
+        """
+        result = StockDataTable()
+        for dto in self._data.values():
+            if getattr(dto, 'isActive', False):
+                result.add(dto)
+        return result
+
+    def __iter__(self):
+        """Allows iteration over the DTOs in the table."""
+        return iter(self._data.values())
+
+    def __len__(self) -> int:
+        """Returns the number of DTOs in the table."""
+        return len(self._data)
+
     def __repr__(self) -> str:
         """
         Returns a JSON string representation of the entire table.

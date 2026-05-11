@@ -73,6 +73,10 @@ class Bumblebee:
 
         self.unit_value: float = AlpacaService().get_unit_value(self.account_dto)
         self.is_entry: bool = AlpacaService().is_entry(self.account_dto)
+        self.is_euporia: bool = False
+        self.is_expansion: bool = False
+        self.is_ressession: bool = False
+        self.is_depression: bool = False
         self.is_long: bool = AlpacaService().is_long(self.account_dto)
         self.is_short: bool = AlpacaService().is_short(self.account_dto)
 
@@ -80,21 +84,39 @@ class Bumblebee:
 
         self.option_tickers: List[str] = (
             AlpacaService().get_tickers(["YieldMax"], ["Short"]) + 
-            AlpacaService().get_tickers(["Roundhill", "WeeklyPay"])
+            AlpacaService().get_tickers(["Roundhill", "WeeklyPay"]) +
+            AlpacaService().get_tickers(["Bitwise", "Option Income Strategy"]) +
+            AlpacaService().get_tickers(["Kurv", "Yield"]) +
+            AlpacaService().get_tickers(["REX", "Equity Premium Income"]) +
+            AlpacaService().get_tickers(["Defiance", "Income Target"]) +
+            AlpacaService().get_tickers(["GraniteShares", "YieldBOOST"]) 
         )
         self.option_tickers_inv: List[str] = AlpacaService().get_tickers(["YieldMax", "Short"])
 
-        self.index_tickers: List[str] = AlpacaService().get_tickers(["MicroSectors"], ["Inverse", "due"])
 
-        self.index_tickers_x2: List[str] = (
-            AlpacaService().get_tickers(["Bull", "2X"]) + 
-            AlpacaService().get_tickers(["Leveraged", "2X"], ["Inverse"])
+
+        self.market_index_tickers: List[str] = get_env_arr("INDICES")
+        self.leverage_tickers: List[str] = get_env_arr("LEVERAGES")
+        self.large_cap_tickers = self.market_index_tickers + YFinanceService().get_etf_holdings(
+            self.market_index_tickers, 
+            min_mcap=50_000_000_000
+        )
+        self.small_cap_tickers = YFinanceService().get_etf_holdings(
+            self.market_index_tickers, 
+            max_mcap=50_000_000_000
         )
 
-        self.index_tickers_x3: List[str] = (
-            AlpacaService().get_tickers(["Bull", "3X"]) + 
-            AlpacaService().get_tickers(["Leveraged", "3X"], ["Inverse"])
-        )
+        # self.index_tickers: List[str] = AlpacaService().get_tickers(["MicroSectors"], ["Inverse", "due"])
+
+        # self.index_tickers_x2: List[str] = (
+        #     AlpacaService().get_tickers(["Bull", "2X"]) + 
+        #     AlpacaService().get_tickers(["Leveraged", "2X"], ["Inverse"])
+        # )
+
+        # self.index_tickers_x3: List[str] = (
+        #     AlpacaService().get_tickers(["Bull", "3X"]) + 
+        #     AlpacaService().get_tickers(["Leveraged", "3X"], ["Inverse"])
+        # )
 
         self.winning_tickers_to_short: List[str] = YFinanceService().get_winner_tickers(
             max_mcap=100_000_000_000,
@@ -116,17 +138,15 @@ class Bumblebee:
 
 
         yfinance_table = YFinanceService().get_stocks_table(self.loser_tickers_to_long + self.position_tickers)
-        self.active_long_positions: StockDataTable = yfinance_table.override(self._positions)
+        self.active_long_positions: StockDataTable = yfinance_table.override(self._positions).filter_active()
         
         yfinance_positions_table = YFinanceService().get_stocks_table(self.position_tickers)
-        self.active_positions: StockDataTable = yfinance_positions_table.override(self._positions)
+        self.active_positions: StockDataTable = yfinance_positions_table.override(self._positions).filter_active()
         
         _logfile("positions", self._positions, active_only=False)
         _logfile("positions (actives)", self._positions)
         _logfile("active positions", self.active_positions, active_only=False)
-        _logfile("active positions (actives)", self.active_positions)
-        _logfile("long positions", self.active_long_positions, active_only=False)
-        _logfile("long positions (actives)", self.active_long_positions)
+        _logfile("active long positions", self.active_long_positions, active_only=False)
         _logfile("account info", self.account_dto)
 
         
@@ -143,16 +163,21 @@ class Bumblebee:
         print("="*60)
         print(f"[Account] Unit Value:             ${self.unit_value:.2f}")
         print(f"[Account] Is Entry:               {self.is_entry}")
+        print(f"[Account] Is Euporia:             {self.is_euporia}")
+        print(f"[Account] Is Expansion:           {self.is_expansion}")
+        print(f"[Account] Is Ressession:          {self.is_ressession}")
+        print(f"[Account] Is Depression:          {self.is_depression}")
         print(f"[Account] Is Long:                {self.is_long}")
         print(f"[Account] Is Short:               {self.is_short}")
-        print(f"[Account] Open Orders:            {len(self.orders_table.get_all())}")
+        print(f"[Account] Open Orders:            {len(self.orders_table)}")
         print(f"[Account] daily % equity change:  {self.account_dto.pct_equity_change} %")
-        print(f"[Data] Position Tickers Amount: {len(self.active_positions.get_tickers(active_only=True))}")
+        print(f"[Data] Position Tickers Amount: {len(self.active_positions)}")
         print(f"[Data] Option Tickers:          {self.option_tickers}")
         print(f"[Data] Option Tickers Inv:      {self.option_tickers_inv}")
-        print(f"[Data] Index Tickers:           {self.index_tickers}")
-        print(f"[Data] Index Tickers x2:        {self.index_tickers_x2}")
-        print(f"[Data] Index Tickers x3:        {self.index_tickers_x3}")
+        print(f"[Data] Market Index Tickers:    {self.market_index_tickers}")
+        print(f"[Data] Leverage Tickers:        {self.leverage_tickers}")
+        print(f"[Data] Large Cap Tickers:       {self.large_cap_tickers}")
+        print(f"[Data] Small Cap Tickers:       {self.small_cap_tickers}")
         print(f"[Data] Winning Tickers (Short): {self.winning_tickers_to_short}")
         print(f"[Data] Loser Tickers (Long):    {self.loser_tickers_to_long}")
         print("="*60 + "\n")
@@ -291,7 +316,7 @@ class Bumblebee:
     
     def _soft_rebalance_long(self) -> None:
         """Executes logic for stocking up long positions (soft rebalance)."""
-        for dto in self.active_long_positions.get_all():
+        for dto in self.active_long_positions:
             # % profit validate
             pct_amp = max(dto.pct_sd, dto.pct_mad)
             # qty validate
@@ -313,7 +338,8 @@ class Bumblebee:
             ###### LOGIC
             ##################################################################
             if (pct_amp > 10.0 and dto.pct_net_pnl < -3.0 * pct_amp): # big lost/gained tickers
-                notional_value = self.unit_value / 4
+                notional_value = self.unit_value / 4 
+                # **Notional Value: the total value of the underlying asset in a contract
                 buy_price = floor_price * (1 - (0.5 * pct_amp / 100.0))
                 raw_qty = notional_value / buy_price
             elif (dto.pct_net_pnl < -10.0 * pct_amp): # big lost/gained tickers
@@ -349,7 +375,39 @@ class Bumblebee:
 
     def _liquidate_long(self) -> None:
         """Executes logic for liquidating long positions."""
-        pass
+        for dto in self.active_positions:
+            # % profit validate
+            pct_amp = max(dto.pct_sd, dto.pct_mad)
+            if (dto.pct_net_pnl <= 0):
+                print(f"[PASS] {dto.symbol}: PNL <= 0.")
+                continue
+            # qty validate
+            if dto.qty <= 0.01:
+                print(f"[PASS] {dto.symbol}: qty <= 0.01.")
+                continue
+            
+            # price validate
+            available_prices = [p for p in (dto.rt_price, dto.price, dto.entry_price) if p > 0]
+            if not available_prices:
+                print(f"[PASS] {dto.symbol}: No price data available.")
+                continue # no price data
+            floor_price = min(available_prices)
+            ceil_price = max(available_prices)
+            # weight validate
+            if abs(dto.qty) * ceil_price <= self.unit_value / 2:
+                print(f"[PASS] {dto.symbol}: Total value <= unit_value.")
+                continue
+            ##################################################################
+            ###### LOGIC
+            ##################################################################
+            sell_price = ceil_price * (1 + (0.33 * pct_amp / 100.0))
+            raw_qty = abs(dto.qty) - 0.01
+            # order
+            self._post_order(dto, 
+                side="sell", 
+                qty=raw_qty, 
+                limit_price=sell_price
+            )
 
     def _soft_rebalance_short(self) -> None:
         """Executes logic for stocking up short positions (soft rebalance)."""
@@ -365,7 +423,7 @@ class Bumblebee:
 
     def _close_long(self) -> None:
         """Executes logic for closing long positions."""
-        for dto in self.active_positions.get_all(active_only=True):
+        for dto in self.active_positions:
             # % profit validate
             pct_amp = max(dto.pct_sd, dto.pct_mad)
             if (dto.pct_net_pnl < 2.0 * pct_amp):
@@ -383,6 +441,10 @@ class Bumblebee:
                 continue # no price data
             floor_price = min(available_prices)
             ceil_price = max(available_prices)
+            # weight validate
+            if abs(dto.qty) * ceil_price <= self.unit_value:
+                print(f"[PASS] {dto.symbol}: Total value <= unit_value.")
+                continue
             ##################################################################
             ###### LOGIC
             ##################################################################
@@ -397,7 +459,7 @@ class Bumblebee:
 
     def _close_short(self) -> None:
         """Executes logic for closing short positions."""
-        for dto in self.active_positions.get_all(active_only=True):
+        for dto in self.active_positions:
             # % profit validate
             pct_amp = max(dto.pct_sd, dto.pct_mad)
             if (dto.pct_net_pnl < 0.5 * pct_amp):

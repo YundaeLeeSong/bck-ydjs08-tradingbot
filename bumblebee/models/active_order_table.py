@@ -28,5 +28,13 @@ class ActiveOrderTable:
         if order_id and isinstance(order_id, str) and order_id in self._data:
             del self._data[order_id]
 
+    def __iter__(self):
+        """Allows iteration over the active orders."""
+        return iter(self._data.values())
+
+    def __len__(self) -> int:
+        """Returns the number of active orders."""
+        return len(self._data)
+
     def __repr__(self) -> str:
         return json.dumps({k: asdict(v) for k, v in self._data.items()}, indent=2)

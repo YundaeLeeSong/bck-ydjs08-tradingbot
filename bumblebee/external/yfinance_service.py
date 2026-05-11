@@ -315,6 +315,104 @@ class YFinanceService:
             plots['pct_derivative'].savefig(os.path.join(graph_path, f"{symbol}_pct_derivative.png"))
             plt.close(plots['pct_derivative'])
 
+    def get_etf_holdings(self, tickers: List[str], min_mcap: Optional[float] = None, max_mcap: Optional[float] = None) -> List[str]:
+        """
+        Fetches the unique top holdings tickers for a list of ETFs.
+        """
+        holdings_set = set()
+        for symbol in tickers:
+            request_data = {"symbol": symbol}
+            try:
+                ticker = yf.Ticker(symbol)
+                data = ticker.funds_data
+                if data is not None and hasattr(data, 'top_holdings'):
+                    holdings = data.top_holdings
+                    if holdings is not None and not holdings.empty:
+                        self._log_debug("get_etf_holdings", request_data, f"Found {len(holdings)} holdings")
+                        for h_symbol in holdings.index:
+                            if isinstance(h_symbol, str) and h_symbol.isalpha() and h_symbol.isupper() and h_symbol.isascii():
+                                holdings_set.add(h_symbol)
+                    else:
+                        self._log_debug("get_etf_holdings", request_data, "No holdings data returned")
+                else:
+                    self._log_debug("get_etf_holdings", request_data, "funds_data attribute unavailable")
+            except Exception as e:
+                self._log_debug("get_etf_holdings_error", request_data, str(e))
+                print(f"Error fetching holdings for {symbol}: {e}")
+                
+        # Always validate the discovered holdings and apply optional market cap filters
+        if not holdings_set:
+            return []
+
+        # 1. Community standard: Bulk validate all holdings via yf.download to drop invalid tickers quickly
+        # This prevents excessive individual API calls and is much more rate-limit friendly.
+        holdings_list = list(holdings_set)
+        valid_tickers = set()
+        
+        import sys
+        import contextlib
+        import io
+        import logging
+        
+        try:
+            # Suppress yfinance error output for invalid tickers
+            logging.getLogger('yfinance').setLevel(logging.CRITICAL)
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                # Batch download 1 day of data to verify existence
+                batch_df = yf.download(holdings_list, period="1d", progress=False, auto_adjust=False)
+                
+            if not batch_df.empty:
+                if isinstance(batch_df.columns, pd.MultiIndex):
+                    if 'Close' in batch_df:
+                        for ticker in holdings_list:
+                            if ticker in batch_df['Close'] and not batch_df['Close'][ticker].dropna().empty:
+                                valid_tickers.add(ticker)
+                else:
+                    # Single ticker fallback
+                    if 'Close' in batch_df and not batch_df['Close'].dropna().empty:
+                        valid_tickers = set(holdings_list)
+        except Exception as e:
+            self._log_debug("get_etf_holdings_batch_validation_error", {}, str(e))
+            valid_tickers = holdings_set  # Fallback
+        finally:
+            logging.getLogger('yfinance').setLevel(logging.WARNING)
+
+        if not valid_tickers:
+            return []
+
+        # If no market cap filtering is needed, return the validated tickers immediately
+        if min_mcap is None and max_mcap is None:
+            return list(valid_tickers)
+
+        # 2. Filter by market cap using fast_info (community standard to avoid rate limiting on quoteSummary)
+        filtered_holdings = []
+        from concurrent.futures import ThreadPoolExecutor
+        
+        def _check_ticker(h_symbol):
+            try:
+                # fast_info is significantly lighter and faster than .info
+                fast_info = yf.Ticker(h_symbol).fast_info
+                
+                # Check for valid ticker by ensuring basic keys exist
+                if not fast_info or 'marketCap' not in fast_info:
+                    return None
+                    
+                mcap = self._get_raw_value(fast_info.get('marketCap', 0))
+                if min_mcap is not None and mcap < min_mcap:
+                    return None
+                if max_mcap is not None and mcap > max_mcap:
+                    return None
+                return h_symbol
+            except Exception as e:
+                return None
+
+        # Use ThreadPoolExecutor for the remaining valid tickers
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            results = executor.map(_check_ticker, valid_tickers)
+            filtered_holdings = [r for r in results if r is not None]
+            
+        return filtered_holdings
+
     def get_stocks_table(self, tickers: List[str], graph_path: Optional[str] = None) -> StockDataTable:
         table = StockDataTable()
         if not tickers: return table
@@ -322,13 +420,22 @@ class YFinanceService:
         if graph_path: os.makedirs(graph_path, exist_ok=True)
         tickers = list(set(tickers))
 
+        import sys
+        import contextlib
+        import io
+        import logging
+
         # Perform a single batch download for all tickers to avoid rate limiting
         try:
-            batch_df = yf.download(tickers, period="1y", interval="1d", progress=False, auto_adjust=False)
+            logging.getLogger('yfinance').setLevel(logging.CRITICAL)
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                batch_df = yf.download(tickers, period="1y", interval="1d", progress=False, auto_adjust=False)
         except Exception as e:
             self._log_debug("batch_fetch_historical_data_error", {"tickers": tickers}, str(e))
             print(f"Failed to batch fetch historical data: {e}")
             return table
+        finally:
+            logging.getLogger('yfinance').setLevel(logging.WARNING)
 
         if batch_df is None or batch_df.empty: return table
         
