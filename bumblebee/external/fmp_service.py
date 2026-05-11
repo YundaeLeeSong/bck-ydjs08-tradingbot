@@ -9,10 +9,10 @@ import os
 import json
 import requests
 from typing import Optional, Any
-from alphavi_util.core import get_env_var
-from alphavi.models import StockDataDTO
+from ydjs_util.core import get_env_var
+from bumblebee.models import StockDataDTO
 
-_DEBUG_LOG_ = "log_ftp"
+_DEBUG_LOG_ = "log_fmp"
 
 class FMPService:
     """
@@ -120,6 +120,8 @@ class FMPService:
             StockDataDTO: A data transfer object populated with the gathered metrics.
         """
         dto = StockDataDTO(symbol=ticker)
+        dto.isActive = True
+        dto.isAnalyzed = True
         print(f"Fetching aggregated data for {ticker}...")
 
         def get_first(data):
@@ -137,6 +139,8 @@ class FMPService:
         dto.beta = profile_data.get("beta", 0.0)
         dto.volume = profile_data.get("volume", profile_data.get("volAvg", 0))
         dto.averageVolume = profile_data.get("volAvg", profile_data.get("averageVolume", 0))
+        dto.price = profile_data.get("price", 0.0)
+        dto.pct_day_pnl = profile_data.get("changePercentage", 0.0)
 
         # 2. Ratios
         ratios_data = get_first(self.fetch_endpoint("ratios", {"symbol": ticker}))

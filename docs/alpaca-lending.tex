@@ -1,0 +1,42 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+% User-action highlights: \uline{...} from package ulem (breaks across lines). Do not use \underline.
+\usepackage[normalem]{ulem}
+\geometry{a4paper, margin=1in}
+
+\title{Alpaca Reference: Securities Lending}
+\author{Jaehoon Song}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+Alpaca's fully paid program is \textbf{securities lending}\footnote{\textbf{Securities lending.} You temporarily lend shares you own. Borrowers often need them for short selling or settlement. You keep economic ownership (price moves still hit your position).}. You can earn small extra income when Alpaca borrows stock from you. \uline{Turn the feature on in the dashboard.} Alpaca picks how much to lend from eligible holdings. \uline{You do not choose symbols or share counts.}
+
+\section{Selling and orders}
+\begin{itemize}
+  \item \uline{You may sell while shares are on loan.} Alpaca \textbf{recalls}\footnote{\textbf{Recall.} The lender pulls shares back from the borrower so you can sell or withdraw them.} them as part of the sale.
+  \item No special order API: \uline{send sells the same way as without lending.}
+\end{itemize}
+
+\section{Cash, dividends, and records}
+\begin{itemize}
+  \item Interest accrues daily. Alpaca credits your cash monthly on the last \textbf{settlement date}\footnote{\textbf{Settlement date.} When a trade is legally finished for payment and delivery. Monthly lending pay posts on that kind of date, per Alpaca's docs.} of the following month.
+  \item If shares are on loan across a dividend, you usually receive a cash \textbf{PIL}\footnote{\textbf{Payment in lieu (PIL).} Cash paid in place of a dividend while the stock was on loan. Tax treatment may differ from a regular qualified dividend.} instead of the ordinary dividend payment.
+  \item \uline{Use \texttt{v2/positions}} for quantities: full share counts stay visible, and lending does not ``hide'' shares from those fields.
+\end{itemize}
+
+\section{Lending volume and rates}
+Alpaca sets how many shares go out and at what rates, from live borrower demand for securities lending. Alpaca does not guarantee that every eligible share will be lent.
+
+
+\section{Bots and the API}
+\uline{Filter activity descriptions for \texttt{LENDING}, \texttt{SLP}, or \texttt{PAYMENT IN LIEU}} to spot lending income. \uline{Keep using your normal order flow.} Trading logic does not need a separate ``lending mode.''
+
+\section{SIPC and backup cash}
+Stocks on loan are \textbf{not} covered by \textbf{SIPC}\footnote{\textbf{Securities Investor Protection Corporation (SIPC).} Customer protection (within limits) if a broker fails. Alpaca states loaned stock is outside that shield while borrowed.} like the rest of the account. Alpaca posts cash collateral (often at a third-party bank) meant to back the value of loaned shares.
+
+\end{document}
