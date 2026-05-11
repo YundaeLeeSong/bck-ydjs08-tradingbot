@@ -1,9 +1,10 @@
-# --- Generated from ./.gitignores on Tue Apr 14 18:30:13 2026 ---
+# --- Generated from ./.gitignores on Mon May 11 19:33:10 2026 ---
 
 #############################################
 # A.gitignore
 #############################################
 #################### ALL PURPOSE GITIGNORE ####################
+.gemini/
 project2305*
 _*/
 tmp*/
@@ -17,6 +18,7 @@ python-lang*/
 *.key.pub
 
 log*/
+playwright*/
 
 ################################################################
 # General Ignores (Large Media Files & Common File Types)
@@ -2820,8 +2822,8 @@ auth.json
 #############################################
 # Leiningen.gitignore
 #############################################
-pom.xml
-pom.xml.asc
+# pom.xml
+# pom.xml.asc
 # *.jar
 *.class
 /lib/
