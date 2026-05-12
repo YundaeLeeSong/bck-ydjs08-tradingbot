@@ -775,6 +775,11 @@ echo.
 echo.%YELLOW%To use AutoHotkey from any command prompt, add the following directory to your system PATH:%RESET%
 echo.%CYAN%C:\Program Files\AutoHotkey\v2%RESET%
 
+@REM ---------------------------------------------------------------------------
+@REM Platform Independent - Python native tools
+@REM ---------------------------------------------------------------------------
+call :Install-App "astral-sh.uv" "uv" "uv" "uv"
+
 
 
 

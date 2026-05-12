@@ -446,7 +446,7 @@ def main():
     # Bumblebee(__name__).close("short")
     # Bumblebee(__name__).liquidate("long")
     # Bumblebee(__name__).liquidate("short")
-    # AlpacaService().report()
+    AlpacaService().report()
 
     # buy(42, "ICOI", 11.9)
     # sell(41.11, "CONY", 23.35)
