@@ -435,8 +435,8 @@ def main():
 
     # test_holdings()
 
-    # # Instantiate Bumblebee
-    # bot = Bumblebee(__name__)
+    # Instantiate Bumblebee
+    bot = Bumblebee(__name__)
     # bot.report_email()
     # bot.rebalance("long", "soft")
 
@@ -444,7 +444,7 @@ def main():
     # Bumblebee(__name__).rebalance("long", "soft")
     # Bumblebee(__name__).close("long")
     # Bumblebee(__name__).close("short")
-    Bumblebee(__name__).liquidate("long")
+    # Bumblebee(__name__).liquidate("long")
     # Bumblebee(__name__).liquidate("short")
     # AlpacaService().report()
 
