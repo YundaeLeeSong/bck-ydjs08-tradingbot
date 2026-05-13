@@ -1,7 +1,7 @@
 [project]
-name = "youtube-downloader"
-version = "0.1.0"
-description = "A Flask app to download YouTube videos"
+name = "alphavi"
+version = "3.1.1"
+description = "Alphavi is a stock trading framework along with utility libraries of broker APIs and trading logic simplifying all workloads"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
