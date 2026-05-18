@@ -577,8 +577,8 @@ class AlpacaService:
         # 1. Polish
         polished_price = round(limit_price, 2)
         polished_qty = round(qty, 2)
-        if not dto.fractionable: polished_qty = float(math.floor(qty))   # non-fract
-        if dto.qty == 0: polished_qty = float(math.floor(qty))           # short
+        if not dto.fractionable: polished_qty = float(math.floor(qty))              # non-fract
+        if dto.qty == 0 and side == "sell": polished_qty = float(math.floor(qty))   # short
         
         # 2. Validate
         if polished_qty <= 0 or polished_price <= 0:

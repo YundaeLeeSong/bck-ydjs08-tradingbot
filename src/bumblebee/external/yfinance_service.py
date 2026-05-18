@@ -12,6 +12,9 @@ import pandas as pd
 from scipy import stats
 import yfinance as yf
 from datetime import datetime
+import matplotlib
+# Use non-interactive 'Agg' backend to prevent 'Tcl_AsyncDelete' thread safety errors
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from typing import List, Optional
 from bumblebee.models import StockDataDTO, StockDataTable

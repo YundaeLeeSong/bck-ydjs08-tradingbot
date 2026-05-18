@@ -435,12 +435,12 @@ def main():
 
     # test_holdings()
 
-    # Instantiate Bumblebee
-    bot = Bumblebee(__name__)
+    # # Instantiate Bumblebee
+    # bot = Bumblebee(__name__)
     # bot.report_email()
     # bot.rebalance("long", "soft")
 
-    # Bumblebee(__name__).report_email()
+    Bumblebee(__name__).report_email()
     # Bumblebee(__name__).rebalance("long", "soft")
     # Bumblebee(__name__).close("long")
     # Bumblebee(__name__).close("short")
@@ -450,9 +450,7 @@ def main():
 
     # buy(42, "ICOI", 11.9)
     # sell(41.11, "CONY", 23.35)
-
     
-    # _logfile("order_check",AlpacaService().get_orders())
     pass
     
 

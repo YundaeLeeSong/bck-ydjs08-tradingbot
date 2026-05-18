@@ -363,6 +363,7 @@ class Bumblebee:
                 continue 
             # calculation, constant notional value, consistent buying
             # order
+            print(f"[ACTION] Soft Rebalance Long: {dto.symbol} | Buy Price: {buy_price:.2f} | Qty: {raw_qty:.4f}")
             self._post_order(dto, 
                 side="buy", 
                 qty=raw_qty, 
