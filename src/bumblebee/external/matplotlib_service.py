@@ -4,6 +4,9 @@ Plotter Module
 Generates and saves various analytical plots.
 """
 import os
+import matplotlib
+# Use non-interactive 'Agg' backend to prevent 'Tcl_AsyncDelete' thread safety errors
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 _DEBUG_LOG_ = "log_graphs"
